@@ -10,7 +10,8 @@ Improving UI/UX of the KU course registration website
 
 - Advanced Course Search
 - Timetable
-- Mock registration practice..
+- Mock registration practice
+- More..?
 
 ## Stacks
 
