@@ -19,6 +19,24 @@ Improving UI/UX of the KU course registration website
 - Backend: Node.js
 - Data: JSON mock data
 
+---------
+# 실행방법
+
+터미널1
+```
+cd frontend
+npm install
+npm run dev
+```
+
+터미널2
+```
+cd backend
+npm install
+npm run dev
+```
+
+
 
 ---------------
 
