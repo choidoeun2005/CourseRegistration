@@ -1,25 +1,8 @@
-# Backend
+# Backend Source
 
-`backend` 폴더는 서버와 데이터 처리를 담당합니다.
-프론트엔드에서 요청한 강의 목록, 사용자 정보, 시간표 데이터 등을 처리합니다.
+서버 및 데이터 처리 담
 
-## 폴더 구조
-
-```txt
-backend/
-├── package.json
-└── src/
-    ├── app.js
-    ├── server.js
-    ├── routes/
-    ├── controllers/
-    ├── services/
-    ├── models/
-    ├── db/
-    └── data/
-```
-
-## 폴더 및 파일 역할
+## 파일 및 디렉토리 역할
 
 | 파일        | 역할                            |
 | -------------- | ----------------------------- |
