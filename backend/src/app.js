@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 import courseRoutes from "./routes/courseRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import timetableRoutes from "./routes/timetableRoutes.js";
+import registrationRoutes from "./routes/registrationRoutes.js";
+import syllabusRoutes from "./routes/syllabusRoutes.js";
+import recommendRoutes from "./routes/recommendRoutes.js";
 
 dotenv.config();
 
@@ -22,5 +25,10 @@ app.get("/", (req, res) => {
 app.use("/api/courses", courseRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/timetable", timetableRoutes);
+app.use("/api/registration", registrationRoutes);
+app.use("/api/syllabi", syllabusRoutes);
+
+// 추천 마법사 전용 API
+app.use("/api/recommend", recommendRoutes);
 
 export default app;

@@ -1,76 +1,217 @@
 import Button from "./Button.jsx";
 
+function getBadgeLabel(badge) {
+    const labelMap = {
+        수강포기제한: "포기제한",
+        유연학기: "유연",
+        교환학생: "교환",
+        원격병행: "병행",
+        출석자율: "출석자율",
+        비대면: "실시간",
+        녹강: "녹강",
+        MOOC: "MOOC"
+    };
+
+    return labelMap[badge] || badge;
+}
+
+function getBadgeClassName(badge) {
+    if (badge === "수강포기제한") return "red";
+    if (badge === "유연학기") return "purple";
+    if (badge === "MOOC") return "blue";
+    if (badge === "교환학생") return "green";
+    if (badge === "녹강") return "blue";
+    if (badge === "비대면") return "blue";
+    if (badge === "원격병행") return "blue";
+    if (badge === "출석자율") return "gray";
+    return "gray";
+}
+
+function formatPeriods(periods = []) {
+    if (!periods.length) return "";
+
+    const sorted = [...periods].sort((a, b) => a - b);
+    if (sorted.length === 1) return String(sorted[0]);
+
+    const isConsecutive = sorted.every((period, index) => {
+        if (index === 0) return true;
+        return period === sorted[index - 1] + 1;
+    });
+
+    return isConsecutive
+        ? `${sorted[0]}-${sorted[sorted.length - 1]}`
+        : sorted.join(",");
+}
+
+function getScheduleText(course) {
+    const sessions = course.schedule?.sessions || [];
+
+    if (sessions.length > 0) {
+        return sessions
+            .map((session) => {
+                const periodText =
+                    session.periodText || formatPeriods(session.periods || []);
+                return `${session.day}(${periodText})`;
+            })
+            .join(" / ");
+    }
+
+    return "시간 미정";
+}
+
+function getRoomText(course) {
+    if (course.schedule?.roomText) return course.schedule.roomText;
+
+    const rooms = course.schedule?.rooms || [];
+    if (rooms.length > 0) return rooms.join(" / ");
+
+    if (course.room) {
+        return String(course.room).replace(/<br\s*\/?>/gi, " / ");
+    }
+
+    return "강의실 미정";
+}
+
 function CourseCard({
                         course,
                         liked,
                         inTimetable,
-                        conflict,
+                        blockReason = "",
                         enrolled,
+                        registrationOpen = false,
                         quickIndex,
                         showEnrollButton = false,
+                        compact = false,
                         onToggleLike,
                         onToggleTimetable,
                         onEnrollCourse
                     }) {
+    const badges = (course.badges || course.tags || []).filter(
+        (badge) => badge !== "영강"
+    );
+
+    const hashtags = course.hashtags || [];
+    const scheduleText = getScheduleText(course);
+    const roomText = getRoomText(course);
+
+    const isRegistrationMode = registrationOpen || showEnrollButton;
+    const canAddToTimetable = !inTimetable && !blockReason;
+    const canEnroll = !enrolled && !blockReason;
+
+    const handleMainAction = () => {
+        if (isRegistrationMode) {
+            if (canEnroll) onEnrollCourse(course.id);
+            return;
+        }
+
+        if (inTimetable || canAddToTimetable) {
+            onToggleTimetable(course.id);
+        }
+    };
+
+    const getMainButtonText = () => {
+        if (inTimetable && !isRegistrationMode) return "빼기";
+        if (blockReason) return blockReason;
+        return compact ? "추가" : "시간표에 추가";
+    };
+
+    const getMainButtonVariant = () => {
+        if (blockReason || enrolled) return "disabled";
+        if (inTimetable && !isRegistrationMode) return "secondary";
+        return "blue";
+    };
+
+    const disabled = Boolean(blockReason) || Boolean(enrolled);
+
     return (
-        <article className={`course-card ${conflict ? "conflict" : ""}`}>
-            <div className="course-main">
-                <div className="course-title-row">
-                    <h3>{course.title}</h3>
-                    <div className="flag-group">
-                        {course.flags.map((flag) => (
-                            <span key={flag} className="mini-flag">
-                {flag}
-              </span>
-                        ))}
-                    </div>
+        <article
+            className={`course-card ${compact ? "compact" : ""} ${
+                isRegistrationMode ? "registration-mode" : ""
+            } ${blockReason ? "conflict" : ""}`}
+        >
+            <div className="course-card-main">
+                <div className="course-title-line">
+                    <h3 title={course.title}>{course.title}</h3>
+
+                    {badges.length > 0 && (
+                        <div className="course-badges">
+                            {badges.map((badge) => (
+                                <span
+                                    key={badge}
+                                    className={`compact-badge ${getBadgeClassName(badge)}`}
+                                    title={badge}
+                                >
+                  {getBadgeLabel(badge)}
+                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <p className="course-meta">
-                    {course.type} | {course.code} - {course.section} | {course.credit}학점
+                    {course.courseType || course.type} | {course.code} - {course.section} |{" "}
+                    {course.credit}학점
                 </p>
 
                 <div className="course-info">
-                    <span>👤 {course.professor}</span>
-                    <span>🕘 {course.timeText}</span>
-                    <span>🏫 {course.room}</span>
-                </div>
-            </div>
-
-            <div className="course-tags">
-                {course.tags.map((tag) => (
-                    <span key={tag} className={`tag ${tag === "수강포기제한" ? "red" : "purple"}`}>
-            {tag}
+          <span title={course.professor || "미정"}>
+            👤 {course.professor || "미정"}
           </span>
-                ))}
-            </div>
+                    <span title={scheduleText}>🕘 {scheduleText}</span>
+                    <span title={roomText}>🏫 {roomText}</span>
+                </div>
 
-            <div className="course-actions">
-                <button className="heart-btn" onClick={() => onToggleLike(course.id)}>
-                    관심 {liked ? "♥" : "♡"}
-                </button>
+                {hashtags.length > 0 && (
+                    <div className="course-hashtags">
+                        {hashtags.slice(0, compact ? 4 : hashtags.length).map((tag) => (
+                            <span key={tag} className="hashtag">
+                {tag}
+              </span>
+                        ))}
 
-                {showEnrollButton ? (
-                    <Button
-                        variant={enrolled ? "disabled" : conflict ? "disabled" : "primary"}
-                        disabled={enrolled || conflict}
-                        onClick={() => onEnrollCourse(course.id)}
-                    >
-                        {enrolled
-                            ? "신청중"
-                            : conflict
-                                ? "교시 중복"
-                                : `신청${quickIndex ? `\n(Ctrl + ${quickIndex})` : ""}`}
-                    </Button>
-                ) : (
-                    <Button
-                        variant={inTimetable ? "secondary" : "blue"}
-                        onClick={() => onToggleTimetable(course.id)}
-                    >
-                        {inTimetable ? "시간표에서 빼기" : "시간표에 추가"}
-                    </Button>
+                        {compact && hashtags.length > 4 && (
+                            <span className="hashtag more">+{hashtags.length - 4}</span>
+                        )}
+                    </div>
                 )}
             </div>
+
+            {isRegistrationMode ? (
+                <button
+                    className={`enroll-hit-area ${disabled ? "disabled" : ""}`}
+                    disabled={disabled}
+                    onClick={handleMainAction}
+                >
+          <span className="enroll-main-text">
+            {enrolled ? "신청완료" : blockReason || "신청"}
+          </span>
+
+                    {!enrolled && !blockReason && quickIndex && (
+                        <span className="enroll-shortcut">Ctrl + {quickIndex}</span>
+                    )}
+
+                    {!enrolled && !blockReason && !quickIndex && (
+                        <span className="enroll-shortcut">오른쪽 전체 클릭 가능</span>
+                    )}
+                </button>
+            ) : (
+                <div className="course-actions">
+                    <button
+                        className={`heart-btn ${liked ? "liked" : ""}`}
+                        onClick={() => onToggleLike(course.id)}
+                    >
+                        {compact ? (liked ? "♥" : "♡") : `관심 ${liked ? "♥" : "♡"}`}
+                    </button>
+
+                    <Button
+                        variant={getMainButtonVariant()}
+                        disabled={disabled}
+                        onClick={handleMainAction}
+                    >
+                        {getMainButtonText()}
+                    </Button>
+                </div>
+            )}
         </article>
     );
 }

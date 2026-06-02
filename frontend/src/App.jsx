@@ -19,6 +19,11 @@ import {
     enrollCourse as requestEnrollCourse
 } from "./api/timetableApi";
 
+import {
+    fetchRegistrationStatus,
+    toggleRegistrationStatus
+} from "./api/registrationApi";
+
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(
         localStorage.getItem("isLoggedIn") === "true"
@@ -30,6 +35,7 @@ function App() {
     const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
     const [quickEnroll, setQuickEnroll] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
+    const [registrationOpen, setRegistrationOpen] = useState(false);
 
     useEffect(() => {
         document.body.classList.toggle("dark", darkMode);
@@ -40,13 +46,21 @@ function App() {
 
         async function loadInitialData() {
             try {
-                const [me, likedCourses, timetableCourses, enrollmentStatus] =
-                    await Promise.all([
-                        fetchMe(),
-                        fetchLikedCourses(),
-                        fetchTimetableCourses(),
-                        fetchEnrollmentStatus()
-                    ]);
+                const [
+                    me,
+                    likedCourses,
+                    timetableCourses,
+                    enrollmentStatus,
+                    registrationStatus
+                ] = await Promise.all([
+                    fetchMe(),
+                    fetchLikedCourses(),
+                    fetchTimetableCourses(),
+                    fetchEnrollmentStatus(),
+                    fetchRegistrationStatus()
+                ]);
+
+                setRegistrationOpen(registrationStatus.registrationOpen);
 
                 setUser(me);
                 setQuickEnroll(me.quickEnroll);
@@ -55,6 +69,8 @@ function App() {
                 setLikedCourseIds(likedCourses.map((course) => course.id));
                 setTimetableCourseIds(timetableCourses.map((course) => course.id));
                 setEnrolledCourseIds(enrollmentStatus.enrolledCourseIds);
+
+                setRegistrationOpen(registrationStatus.registrationOpen);
             } catch (error) {
                 console.error(error);
             }
@@ -69,6 +85,15 @@ function App() {
         setQuickEnroll(loginUser.quickEnroll);
         setDarkMode(loginUser.darkMode);
         localStorage.setItem("isLoggedIn", "true");
+    };
+
+    const handleToggleRegistration = async () => {
+        try {
+            const result = await toggleRegistrationStatus();
+            setRegistrationOpen(result.registrationOpen);
+        } catch (error) {
+            alert("수강신청 상태 변경에 실패했습니다.");
+        }
     };
 
     const toggleLike = async (courseId) => {
@@ -141,7 +166,12 @@ function App() {
 
     return (
         <div className="app">
-            {isLoggedIn && <Header />}
+            {isLoggedIn && (
+                <Header
+                    registrationOpen={registrationOpen}
+                    onToggleRegistration={handleToggleRegistration}
+                />
+            )}
 
             <main className="page-container">
                 <Routes>
@@ -157,8 +187,11 @@ function App() {
                                 <CourseListPage
                                     likedCourseIds={likedCourseIds}
                                     timetableCourseIds={timetableCourseIds}
+                                    enrolledCourseIds={enrolledCourseIds}
+                                    registrationOpen={registrationOpen}
                                     onToggleLike={toggleLike}
                                     onToggleTimetable={toggleTimetable}
+                                    onEnrollCourse={enrollCourse}
                                 />
                             ) : (
                                 <Navigate to="/login" />
@@ -175,6 +208,7 @@ function App() {
                                     timetableCourseIds={timetableCourseIds}
                                     enrolledCourseIds={enrolledCourseIds}
                                     quickEnroll={quickEnroll}
+                                    registrationOpen={registrationOpen}
                                     onToggleLike={toggleLike}
                                     onToggleTimetable={toggleTimetable}
                                     onEnrollCourse={enrollCourse}

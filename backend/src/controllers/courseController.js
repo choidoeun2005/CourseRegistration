@@ -26,10 +26,18 @@ export function getCourse(req, res) {
     res.json(course);
 }
 
-export function getRecommendedCourses(req, res) {
-    const { prompt } = req.body;
+export async function getRecommendedCourses(req, res) {
+    try {
+        const { prompt } = req.body;
 
-    const result = recommendCourses(prompt);
+        const result = await recommendCourses(prompt);
 
-    res.json(result);
+        res.json(result);
+    } catch (error) {
+        console.error("추천 API 에러:", error);
+
+        res.status(500).json({
+            message: error.message || "과목 추천에 실패했습니다."
+        });
+    }
 }
