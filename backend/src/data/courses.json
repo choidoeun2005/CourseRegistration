@@ -1,138 +1,1436 @@
 [
   {
     "id": 1,
-    "title": "컴퓨터구조",
-    "type": "전필",
-    "code": "COSE323",
+    "title": "이산수학(영강)",
+    "type": "전선",
+    "code": "COSE211",
     "section": "01",
     "credit": 3,
-    "professor": "구건재",
-    "days": ["월", "수"],
-    "periods": [6],
-    "timeText": "월[6] 수[6]",
-    "room": "우정정보관 B102호",
+    "professor": "박성빈",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      6
+    ],
+    "timeText": "화[6] 목[6]",
+    "room": "정보통신관 202호",
     "college": "정보대학",
     "department": "컴퓨터학과",
-    "tags": ["수강포기제한"],
+    "tags": [
+      "교환학생"
+    ],
     "flags": []
   },
   {
     "id": 2,
+    "title": "이산수학(영강)",
+    "type": "전선",
+    "code": "COSE211",
+    "section": "02",
+    "credit": 3,
+    "professor": "박성빈",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "월[5] 수[5]",
+    "room": "정보통신관 202호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 3,
+    "title": "이산수학",
+    "type": "전선",
+    "code": "COSE211",
+    "section": "03",
+    "credit": 3,
+    "professor": "유주연",
+    "days": [
+      "월"
+    ],
+    "periods": [
+      2,
+      3
+    ],
+    "timeText": "월[2-3]",
+    "room": "정운오IT교양관 609호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 4,
+    "title": "이산수학",
+    "type": "전선",
+    "code": "COSE211",
+    "section": "04",
+    "credit": 3,
+    "professor": "유주연",
+    "days": [
+      "목"
+    ],
+    "periods": [
+      2,
+      3
+    ],
+    "timeText": "목[2-3]",
+    "room": "애기능생활관 302호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 5,
+    "title": "자료구조(영강)",
+    "type": "전필",
+    "code": "COSE213",
+    "section": "01",
+    "credit": 3,
+    "professor": "정원기",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "화[2] 목[2]",
+    "room": "정운오IT교양관 B103호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 6,
+    "title": "자료구조(영강)",
+    "type": "전필",
+    "code": "COSE213",
+    "section": "02",
+    "credit": 3,
+    "professor": "김동선",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      3,
+      4
+    ],
+    "timeText": "화[3-4] 목[3-4]",
+    "room": "정보통신관 B101호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "수강포기제한",
+      "유연학기"
+    ],
+    "flags": []
+  },
+  {
+    "id": 7,
+    "title": "자료구조(영강)",
+    "type": "전필",
+    "code": "COSE213",
+    "section": "03",
+    "credit": 3,
+    "professor": "전유석",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "월[2] 수[2]",
+    "room": "정보통신관 205호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 8,
+    "title": "자료구조",
+    "type": "전필",
+    "code": "COSE213",
+    "section": "04",
+    "credit": 3,
+    "professor": "유용재",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      1,
+      2
+    ],
+    "timeText": "금[1-2]",
+    "room": "정운오IT교양관 B103호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 9,
+    "title": "자료구조",
+    "type": "전필",
+    "code": "COSE213",
+    "section": "05",
+    "credit": 3,
+    "professor": "유용재",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      3,
+      4
+    ],
+    "timeText": "금[3-4]",
+    "room": "정운오IT교양관 B103호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 10,
+    "title": "자료구조",
+    "type": "전필",
+    "code": "COSE213",
+    "section": "06",
+    "credit": 3,
+    "professor": "이도길",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "월[2] 수[2]",
+    "room": "정운오IT교양관 B102",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 11,
+    "title": "알고리즘(영강)",
+    "type": "전필",
+    "code": "COSE214",
+    "section": "01",
+    "credit": 3,
+    "professor": "박성빈",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      6
+    ],
+    "timeText": "월[6] 수[6]",
+    "room": "정보통신관 202호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 12,
+    "title": "알고리즘(영강)",
+    "type": "전필",
+    "code": "COSE214",
+    "section": "02",
+    "credit": 3,
+    "professor": "박성빈",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "월[4] 수[4]",
+    "room": "정보통신관 202호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 13,
+    "title": "알고리즘(영강)",
+    "type": "전필",
+    "code": "COSE214",
+    "section": "03",
+    "credit": 3,
+    "professor": "박성빈",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      7,
+      8
+    ],
+    "timeText": "화[7-8] 목[7-8]",
+    "room": "정보통신관 202호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 14,
+    "title": "계산이론(영강)",
+    "type": "전선",
+    "code": "COSE215",
+    "section": "01",
+    "credit": 3,
+    "professor": "이희조",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "화[5] 목[5]",
+    "room": "정운오IT교양관 B102",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 15,
+    "title": "계산이론(영강)",
+    "type": "전선",
+    "code": "COSE215",
+    "section": "02",
+    "credit": 3,
+    "professor": "박지혁",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "월[4] 수[4]",
+    "room": "정운오IT교양관 B102",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 16,
+    "title": "논리설계",
+    "type": "전선",
+    "code": "COSE221",
+    "section": "01",
+    "credit": 3,
+    "professor": "이숙윤",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      1
+    ],
+    "timeText": "화[1] 목[1]",
+    "room": "애기능생활관 301호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 17,
+    "title": "논리설계(영강)",
+    "type": "전선",
+    "code": "COSE221",
+    "section": "02",
+    "credit": 3,
+    "professor": "이중희",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      6
+    ],
+    "timeText": "월[6] 수[6]",
+    "room": "정운오IT교양관 609호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 18,
+    "title": "컴퓨터구조(영강)",
+    "type": "전필",
+    "code": "COSE222",
+    "section": "00",
+    "credit": 3,
+    "professor": "김영근",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "월[5] 수[5]",
+    "room": "정보통신관 205호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 19,
+    "title": "데이터통신(영강)",
+    "type": "전선",
+    "code": "COSE242",
+    "section": "00",
+    "credit": 3,
+    "professor": "곽정호",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "화[4] 목[4]",
+    "room": "정보통신관 604호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 20,
+    "title": "공학수학",
+    "type": "전선",
+    "code": "COSE281",
+    "section": "01",
+    "credit": 3,
+    "professor": "박중석",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      4,
+      5
+    ],
+    "timeText": "금[4-5]",
+    "room": "정운오IT교양관 B102",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 21,
+    "title": "공학수학",
+    "type": "전선",
+    "code": "COSE281",
+    "section": "02",
+    "credit": 3,
+    "professor": "안소영",
+    "days": [
+      "월"
+    ],
+    "periods": [
+      3,
+      4
+    ],
+    "timeText": "월[3-4]",
+    "room": "정운오IT교양관 611호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 22,
+    "title": "회로이론",
+    "type": "전선",
+    "code": "COSE283",
+    "section": "00",
+    "credit": 3,
+    "professor": "이주섭",
+    "days": [
+      "수",
+      "금"
+    ],
+    "periods": [
+      3
+    ],
+    "timeText": "수[3] 금[3]",
+    "room": "애기능생활관 302호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 23,
+    "title": "컴파일러(영강)",
+    "type": "전선",
+    "code": "COSE312",
+    "section": "00",
+    "credit": 3,
+    "professor": "오학주",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      2,
+      3
+    ],
+    "timeText": "화[2-3] 목[2-3]",
+    "room": "정운오IT교양관 611호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "수강포기제한",
+      "유연학기"
+    ],
+    "flags": []
+  },
+  {
+    "id": 24,
+    "title": "컴퓨터시스템설계(영강)",
+    "type": "전선",
+    "code": "COSE321",
+    "section": "00",
+    "credit": 3,
+    "professor": "서태원",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "월[4] 수[4]",
+    "room": "애기능생활관 302호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 25,
+    "title": "시스템프로그래밍(영강)",
+    "type": "전선",
+    "code": "COSE322",
+    "section": "00",
+    "credit": 3,
+    "professor": "양경식",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "월[4] 수[4]",
+    "room": "정보통신관 205호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 26,
+    "title": "컴퓨터그래픽스",
+    "type": "전선",
+    "code": "COSE331",
+    "section": "01",
+    "credit": 3,
+    "professor": "한정현",
+    "days": [
+      "수",
+      "금"
+    ],
+    "periods": [
+      5,
+      6
+    ],
+    "timeText": "수[5-6] 금[5-6]",
+    "room": "정보통신관 604호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "수강포기제한",
+      "유연학기"
+    ],
+    "flags": []
+  },
+  {
+    "id": 27,
+    "title": "컴퓨터그래픽스(영강)",
+    "type": "전선",
+    "code": "COSE331",
+    "section": "02",
+    "credit": 3,
+    "professor": "강형엽",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      3,
+      4
+    ],
+    "timeText": "금[3-4]",
+    "room": "정보통신관 202호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 28,
+    "title": "운영체제",
+    "type": "전필",
+    "code": "COSE341",
+    "section": "01",
+    "credit": 3,
+    "professor": "유헌창",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "월[2] 수[2]",
+    "room": "애기능생활관 302호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": [
+      "T"
+    ]
+  },
+  {
+    "id": 29,
+    "title": "운영체제(영강)",
+    "type": "전필",
+    "code": "COSE341",
+    "section": "02",
+    "credit": 3,
+    "professor": "오상은",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      3
+    ],
+    "timeText": "월[3] 수[3]",
+    "room": "정보통신관 205호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 30,
+    "title": "운영체제",
+    "type": "전필",
+    "code": "COSE341",
+    "section": "03",
+    "credit": 3,
+    "professor": "최수경",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      2,
+      3
+    ],
+    "timeText": "금[2-3]",
+    "room": "정운오IT교양관 611호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 31,
+    "title": "운영체제(영강)",
+    "type": "전필",
+    "code": "COSE341",
+    "section": "04",
+    "credit": 3,
+    "professor": "신영주",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "월[2] 수[2]",
+    "room": "정운오IT교양관 405호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 32,
+    "title": "컴퓨터네트워크",
+    "type": "전필",
+    "code": "COSE342",
+    "section": "01",
+    "credit": 3,
+    "professor": "민성기",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      3
+    ],
+    "timeText": "화[3] 목[3]",
+    "room": "정보통신관 604호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 33,
+    "title": "컴퓨터네트워크(영강)",
+    "type": "전필",
+    "code": "COSE342",
+    "section": "02",
+    "credit": 3,
+    "professor": "김세연",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "화[5] 목[5]",
+    "room": "정보통신관 205호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 34,
+    "title": "컴퓨터네트워크",
+    "type": "전필",
+    "code": "COSE342",
+    "section": "03",
+    "credit": 3,
+    "professor": "김종현",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "월[4] 수[4]",
+    "room": "정운오IT교양관 609호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 35,
     "title": "인공지능",
     "type": "전필",
     "code": "COSE361",
     "section": "01",
     "credit": 3,
     "professor": "김현철",
-    "days": ["월", "수"],
-    "periods": [2],
-    "timeText": "월[2] 수[2]",
-    "room": "정운오IT관 B101호",
-    "college": "정보대학",
-    "department": "컴퓨터학과",
-    "tags": ["교환학생"],
-    "flags": ["M", "F", "T"]
-  },
-  {
-    "id": 3,
-    "title": "딥러닝",
-    "type": "전필",
-    "code": "COSE242",
-    "section": "01",
-    "credit": 3,
-    "professor": "백승준",
-    "days": ["월", "수"],
-    "periods": [1],
-    "timeText": "월[1] 수[1]",
-    "room": "애기능생활관 302호",
-    "college": "정보대학",
-    "department": "컴퓨터학과",
-    "tags": ["교환학생", "유연학기"],
-    "flags": []
-  },
-  {
-    "id": 4,
-    "title": "딥러닝",
-    "type": "전필",
-    "code": "COSE420",
-    "section": "02",
-    "credit": 3,
-    "professor": "강성우",
-    "days": ["월", "수"],
-    "periods": [2],
-    "timeText": "월[2] 수[2]",
-    "room": "우정정보관 610호",
-    "college": "정보대학",
-    "department": "컴퓨터학과",
-    "tags": ["수강포기제한", "교환학생"],
-    "flags": []
-  },
-  {
-    "id": 5,
-    "title": "자료구조",
-    "type": "전필",
-    "code": "COSE223",
-    "section": "00",
-    "credit": 3,
-    "professor": "전유석",
-    "days": ["금"],
-    "periods": [3, 4],
-    "timeText": "금[3-4]",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "화[5] 목[5]",
     "room": "애기능생활관 301호",
     "college": "정보대학",
     "department": "컴퓨터학과",
-    "tags": ["교환학생"],
+    "tags": [],
     "flags": []
   },
   {
-    "id": 6,
-    "title": "데이터베이스",
+    "id": 36,
+    "title": "인공지능(영강)",
     "type": "전필",
-    "code": "COSE323",
-    "section": "01",
+    "code": "COSE361",
+    "section": "02",
     "credit": 3,
-    "professor": "박종혁",
-    "days": ["화", "목"],
-    "periods": [6],
-    "timeText": "화[6] 목[6]",
-    "room": "우정정보관 B101호",
+    "professor": "강성구",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      6
+    ],
+    "timeText": "월[6] 수[6]",
+    "room": "정보통신관 205호",
     "college": "정보대학",
     "department": "컴퓨터학과",
-    "tags": ["유연학기"],
+    "tags": [],
+    "flags": [
+      "T"
+    ]
+  },
+  {
+    "id": 37,
+    "title": "인공지능(영강)",
+    "type": "전필",
+    "code": "COSE361",
+    "section": "03",
+    "credit": 3,
+    "professor": "이상민",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "화[4] 목[4]",
+    "room": "정운오IT교양관 B103호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
     "flags": []
   },
   {
-    "id": 7,
-    "title": "논리설계",
-    "type": "전필",
-    "code": "COSE242",
+    "id": 38,
+    "title": "기계학습(영강)",
+    "type": "전선",
+    "code": "COSE362",
+    "section": "00",
+    "credit": 3,
+    "professor": "박성우",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      6
+    ],
+    "timeText": "화[6] 목[6]",
+    "room": "정보통신관 205호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 39,
+    "title": "데이터베이스",
+    "type": "전선",
+    "code": "COSE371",
+    "section": "01",
+    "credit": 3,
+    "professor": "정연돈",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "화[2] 목[2]",
+    "room": "정운오IT교양관 609호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": [
+      "T"
+    ]
+  },
+  {
+    "id": 40,
+    "title": "데이터베이스(영강)",
+    "type": "전선",
+    "code": "COSE371",
+    "section": "02",
+    "credit": 3,
+    "professor": "박종혁",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "화[4] 목[4]",
+    "room": "정보통신관 202호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 41,
+    "title": "신호및시스템",
+    "type": "전선",
+    "code": "COSE385",
+    "section": "00",
+    "credit": 3,
+    "professor": "이재훈",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      3
+    ],
+    "timeText": "월[3] 수[3]",
+    "room": "애기능생활관 301호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 42,
+    "title": "기업가정신과리더쉽",
+    "type": "전선",
+    "code": "COSE389",
+    "section": "00",
+    "credit": 3,
+    "professor": "이문영",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "월[5] 수[5]",
+    "room": "애기능생활관 301호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 43,
+    "title": "창의적소프트웨어창업방법론",
+    "type": "전선",
+    "code": "COSE394",
+    "section": "00",
+    "credit": 3,
+    "professor": "인호",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "월[2] 수[2]",
+    "room": "정운오IT교양관 610호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": [
+      "F",
+      "T"
+    ]
+  },
+  {
+    "id": 44,
+    "title": "현장실습및창업실습I",
+    "type": "전선",
+    "code": "COSE401",
+    "section": "00",
+    "credit": 3,
+    "professor": "이숙윤",
+    "days": [],
+    "periods": [],
+    "timeText": "",
+    "room": "",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 45,
+    "title": "현장실습및창업실습II",
+    "type": "전선",
+    "code": "COSE402",
+    "section": "00",
+    "credit": 3,
+    "professor": "이숙윤",
+    "days": [],
+    "periods": [],
+    "timeText": "",
+    "room": "",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 46,
+    "title": "현장실습및창업실습III",
+    "type": "전선",
+    "code": "COSE403",
+    "section": "00",
+    "credit": 3,
+    "professor": "이숙윤",
+    "days": [],
+    "periods": [],
+    "timeText": "",
+    "room": "",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 47,
+    "title": "현장실습및창업실습IV",
+    "type": "전선",
+    "code": "COSE404",
+    "section": "00",
+    "credit": 3,
+    "professor": "이숙윤",
+    "days": [],
+    "periods": [],
+    "timeText": "",
+    "room": "",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 48,
+    "title": "개별연구프로젝트(영강)",
+    "type": "전선",
+    "code": "COSE407",
     "section": "00",
     "credit": 3,
     "professor": "김영근",
-    "days": ["월", "수"],
-    "periods": [1],
-    "timeText": "월[1] 수[1]",
-    "room": "애기능생활관 301호",
+    "days": [
+      "화",
+      "토"
+    ],
+    "periods": [
+      6
+    ],
+    "timeText": "화[6] 토[2-4]",
+    "room": "정운오IT교양관 609호",
     "college": "정보대학",
     "department": "컴퓨터학과",
-    "tags": ["교환학생", "유연학기"],
+    "tags": [],
     "flags": []
   },
   {
-    "id": 8,
-    "title": "강화학습",
-    "type": "전필",
-    "code": "COSE420",
-    "section": "01",
+    "id": 49,
+    "title": "소프트웨어검증(영강)",
+    "type": "전선",
+    "code": "COSE419",
+    "section": "00",
     "credit": 3,
-    "professor": "최성준",
-    "days": ["월", "수"],
-    "periods": [2],
-    "timeText": "월[2] 수[2]",
-    "room": "우정정보관 604호",
+    "professor": "안가빈",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "화[5] 목[5]",
+    "room": "정보통신관 B101호",
     "college": "정보대학",
     "department": "컴퓨터학과",
-    "tags": ["수강포기제한", "교환학생"],
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 50,
+    "title": "임베디드시스템(영강)",
+    "type": "전선",
+    "code": "COSE421",
+    "section": "00",
+    "credit": 3,
+    "professor": "서태원",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "화[4] 목[4]",
+    "room": "애기능생활관 302호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 51,
+    "title": "인간컴퓨터상호작용입문(영강)",
+    "type": "전선",
+    "code": "COSE432",
+    "section": "00",
+    "credit": 3,
+    "professor": "박채용",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "화[5] 목[5]",
+    "room": "정보통신관 604호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 52,
+    "title": "인터넷프로토콜(영강)",
+    "type": "전선",
+    "code": "COSE441",
+    "section": "00",
+    "credit": 3,
+    "professor": "김효곤",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      2
+    ],
+    "timeText": "화[2] 목[2]",
+    "room": "정운오IT교양관 610호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 53,
+    "title": "소프트웨어보안(영강)",
+    "type": "전선",
+    "code": "COSE451",
+    "section": "00",
+    "credit": 3,
+    "professor": "우승훈",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "화[4] 목[4]",
+    "room": "정보통신관 205호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 54,
+    "title": "스타트업프로젝트관리",
+    "type": "전선",
+    "code": "COSE455",
+    "section": "00",
+    "credit": 3,
+    "professor": "이문영",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      4
+    ],
+    "timeText": "월[4] 수[4]",
+    "room": "애기능생활관 301호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 55,
+    "title": "실전SW프로젝트",
+    "type": "전선",
+    "code": "COSE457",
+    "section": "00",
+    "credit": 3,
+    "professor": "황영숙,유헌창",
+    "days": [
+      "목",
+      "토"
+    ],
+    "periods": [
+      4,
+      5
+    ],
+    "timeText": "목[4-5] 토[3-4]",
+    "room": "정운오IT교양관 609호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 56,
+    "title": "자연어처리(영강)",
+    "type": "전선",
+    "code": "COSE461",
+    "section": "01",
+    "credit": 3,
+    "professor": "이병준",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      2,
+      3
+    ],
+    "timeText": "금[2-3]",
+    "room": "정운오IT교양관 609호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 57,
+    "title": "자연어처리(영강)",
+    "type": "전선",
+    "code": "COSE461",
+    "section": "02",
+    "credit": 3,
+    "professor": "장부루",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      5,
+      6
+    ],
+    "timeText": "금[5-6]",
+    "room": "정보통신관 202호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": []
+  },
+  {
+    "id": 58,
+    "title": "데이터과학",
+    "type": "전선",
+    "code": "COSE471",
+    "section": "01",
+    "credit": 3,
+    "professor": "강재우",
+    "days": [
+      "화",
+      "목"
+    ],
+    "periods": [
+      3,
+      4
+    ],
+    "timeText": "화[3-4] 목[3-4]",
+    "room": "정운오IT교양관 610호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "수강포기제한",
+      "유연학기"
+    ],
+    "flags": []
+  },
+  {
+    "id": 59,
+    "title": "데이터과학(영강)",
+    "type": "전선",
+    "code": "COSE471",
+    "section": "02",
+    "credit": 3,
+    "professor": "윤수식",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      1,
+      2
+    ],
+    "timeText": "금[1-2]",
+    "room": "정운오IT교양관 610호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "교환학생"
+    ],
+    "flags": [
+      "T"
+    ]
+  },
+  {
+    "id": 60,
+    "title": "딥러닝(영강)",
+    "type": "전선",
+    "code": "COSE474",
+    "section": "00",
+    "credit": 3,
+    "professor": "서홍석",
+    "days": [
+      "월",
+      "수"
+    ],
+    "periods": [
+      4,
+      5
+    ],
+    "timeText": "월[4-5] 수[4-5]",
+    "room": "정운오IT교양관 610호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [
+      "수강포기제한",
+      "유연학기"
+    ],
+    "flags": []
+  },
+  {
+    "id": 61,
+    "title": "산학캡스톤디자인",
+    "type": "전선",
+    "code": "COSE480",
+    "section": "00",
+    "credit": 3,
+    "professor": "이숙윤,서홍석",
+    "days": [
+      "화",
+      "토"
+    ],
+    "periods": [
+      5,
+      6
+    ],
+    "timeText": "화[5-6] 토[2-3]",
+    "room": "애기능생활관 302호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 62,
+    "title": "무선회로설계",
+    "type": "전선",
+    "code": "COSE483",
+    "section": "00",
+    "credit": 3,
+    "professor": "이주섭",
+    "days": [
+      "수",
+      "금"
+    ],
+    "periods": [
+      5
+    ],
+    "timeText": "수[5] 금[5]",
+    "room": "과도관 611호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
+    "flags": []
+  },
+  {
+    "id": 63,
+    "title": "전산학특강(영강)",
+    "type": "전선",
+    "code": "COSE490",
+    "section": "00",
+    "credit": 3,
+    "professor": "박성빈",
+    "days": [
+      "금"
+    ],
+    "periods": [
+      3,
+      4
+    ],
+    "timeText": "금[3-4]",
+    "room": "정보통신관 B101호",
+    "college": "정보대학",
+    "department": "컴퓨터학과",
+    "tags": [],
     "flags": []
   }
 ]
