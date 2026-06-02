@@ -1,33 +1,41 @@
 import Button from "./Button.jsx";
 
 function CourseCard({
-                        course,
-                        liked,
-                        inTimetable,
-                        conflict,
-                        enrolled,
-                        quickIndex,
-                        showEnrollButton = false,
-                        onToggleLike,
-                        onToggleTimetable,
-                        onEnrollCourse
-                    }) {
+    course,
+    liked,
+    inTimetable,
+    conflict,
+    enrolled,
+    quickIndex,
+    showEnrollButton = false,
+    isHovered,
+    onToggleLike,
+    onToggleTimetable,
+    onEnrollCourse,
+    onMouseEnter,
+    onMouseLeave,
+}) {
     return (
-        <article className={`course-card ${conflict ? "conflict" : ""}`}>
+        <article
+            className={`course-card ${conflict ? "conflict" : ""} ${isHovered ? "card-hovered" : ""}`}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
             <div className="course-main">
                 <div className="course-title-row">
                     <h3>{course.title}</h3>
                     <div className="flag-group">
                         {course.flags.map((flag) => (
                             <span key={flag} className="mini-flag">
-                {flag}
-              </span>
+                                {flag}
+                            </span>
                         ))}
                     </div>
                 </div>
 
                 <p className="course-meta">
-                    {course.type} | {course.code} - {course.section} | {course.credit}학점
+                    {course.type} | {course.code} - {course.section} |{" "}
+                    {course.credit}학점
                 </p>
 
                 <div className="course-info">
@@ -39,28 +47,36 @@ function CourseCard({
 
             <div className="course-tags">
                 {course.tags.map((tag) => (
-                    <span key={tag} className={`tag ${tag === "수강포기제한" ? "red" : "purple"}`}>
-            {tag}
-          </span>
+                    <span
+                        key={tag}
+                        className={`tag ${tag === "수강포기제한" ? "red" : "purple"}`}
+                    >
+                        {tag}
+                    </span>
                 ))}
             </div>
 
             <div className="course-actions">
-                <button className="heart-btn" onClick={() => onToggleLike(course.id)}>
+                <button
+                    className="heart-btn"
+                    onClick={() => onToggleLike(course.id)}
+                >
                     관심 {liked ? "♥" : "♡"}
                 </button>
 
                 {showEnrollButton ? (
                     <Button
-                        variant={enrolled ? "disabled" : conflict ? "disabled" : "primary"}
+                        variant={
+                            enrolled ? "disabled" : conflict ? "disabled" : "primary"
+                        }
                         disabled={enrolled || conflict}
                         onClick={() => onEnrollCourse(course.id)}
                     >
                         {enrolled
                             ? "신청중"
                             : conflict
-                                ? "교시 중복"
-                                : `신청${quickIndex ? `\n(Ctrl + ${quickIndex})` : ""}`}
+                            ? "교시 중복"
+                            : `신청${quickIndex ? `\n(Ctrl + ${quickIndex})` : ""}`}
                     </Button>
                 ) : (
                     <Button

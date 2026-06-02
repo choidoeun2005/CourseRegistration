@@ -15,7 +15,7 @@ function CartPage({
                       onEnrollCourse
                   }) {
     const { courses, loading, error } = useCourses();
-    const [viewType, setViewType] = useState("list");
+    const [viewType, setViewType] = useState("timetable");
     const [queueMessage, setQueueMessage] = useState("");
 
     const likedCourses = useMemo(
