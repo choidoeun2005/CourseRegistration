@@ -3695,3 +3695,243 @@ body.timetable-wide .untimed-course-box {
         justify-self: start;
     }
 }
+
+.enrollment-queue-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+
+    background: rgba(255, 255, 255, 0.76);
+    backdrop-filter: blur(3px);
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    pointer-events: all !important;
+}
+
+.enrollment-queue-card {
+    width: min(460px, calc(100vw - 40px));
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+
+    padding: 28px 30px;
+    box-sizing: border-box;
+
+    text-align: center;
+}
+
+.queue-card-label {
+    display: inline-flex;
+    background: #fff1ea;
+    color: #c94c2e;
+    border: 1px solid #f0b49c;
+    padding: 6px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 14px;
+}
+
+.enrollment-queue-card h2 {
+    margin: 0 0 16px;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.queue-main-message {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    color: #333;
+}
+
+.queue-main-message strong {
+    color: #c94c2e;
+}
+
+.queue-main-message.success {
+    color: #c94c5a;
+}
+
+.queue-main-message.error {
+    color: #b13848;
+}
+
+.queue-sub-message {
+    margin: 8px 0 18px;
+    color: #777;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.queue-progress-track {
+    height: 14px;
+    background: #eeeeee;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.queue-progress-fill {
+    height: 100%;
+    background: #4d92cc;
+    border-radius: 999px;
+    transition: width 0.12s linear;
+}
+
+.queue-progress-fill.success {
+    background: #c94c5a;
+}
+
+.queue-progress-fill.error {
+    background: #999;
+}
+
+.queue-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    color: #777;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.queue-tip-box {
+    margin-top: 20px;
+    background: #f7f7f7;
+    border: 1px solid #e2e2e2;
+    padding: 12px 14px;
+
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.queue-tip-box strong {
+    color: #c94c2e;
+    font-weight: 900;
+}
+
+.queue-tip-box span {
+    color: #555;
+    font-weight: 700;
+}
+
+.enroll-hit-area.cancel-mode {
+    background: #fff1f3 !important;
+    color: #9b2d3a !important;
+    border-left-color: #e7b7bd !important;
+}
+
+.enroll-hit-area.cancel-mode:hover {
+    background: #ffe4e8 !important;
+}
+
+.tt-course-block.enrolled {
+    background: #ffe4e8 !important;
+    border-left-color: #c94c5a !important;
+}
+
+.tt-course-block.pending {
+    background: #dcecff !important;
+    border-left-color: #4d92cc !important;
+}
+/* =========================================================
+   CourseCard enrollment/cancel state
+========================================================= */
+
+.course-card.enrolled-card {
+    border-color: #e7b7bd;
+}
+
+.course-card.enrolled-card .course-card-main {
+    background: #fffafa;
+}
+
+.enroll-hit-area.cancel-mode {
+    background: #fff1f3 !important;
+    color: #9b2d3a !important;
+    border-left-color: #e7b7bd !important;
+}
+
+.enroll-hit-area.cancel-mode:hover {
+    background: #ffe4e8 !important;
+}
+
+.enroll-hit-area.add-mode {
+    background: #e8f3ff !important;
+    color: #246ca3 !important;
+    border-left-color: #4d92cc !important;
+}
+
+.enroll-hit-area.add-mode:hover {
+    background: #dcecff !important;
+}
+
+/* =========================================================
+   CourseCard enrollment mode
+========================================================= */
+
+.enroll-hit-area.enroll-mode {
+    background: #fff1ea !important;
+    color: #b9472b !important;
+    border-left-color: #e4572e !important;
+}
+
+.enroll-hit-area.enroll-mode:hover {
+    background: #ffe4d8 !important;
+}
+
+.enroll-hit-area.cancel-mode {
+    background: #fff1f3 !important;
+    color: #9b2d3a !important;
+    border-left-color: #c94c5a !important;
+}
+
+.enroll-hit-area.cancel-mode:hover {
+    background: #ffe4e8 !important;
+}
+
+.course-card.enrolled-card {
+    border-color: #e7b7bd;
+}
+
+.course-card.enrolled-card .course-card-main {
+    background: #fffafa;
+}
+
+.enroll-hit-area.disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+/* =========================================================
+   Header reset button
+========================================================= */
+
+.header-reset-button {
+    height: 36px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    color: #666;
+
+    padding: 0 14px;
+    border-radius: 8px;
+
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.header-reset-button:hover {
+    background: #fff1ea;
+    border-color: #e7b7bd;
+    color: #b9472b;
+}

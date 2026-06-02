@@ -31,6 +31,7 @@ function formatPeriods(periods = []) {
     if (!periods.length) return "";
 
     const sorted = [...periods].sort((a, b) => a - b);
+
     if (sorted.length === 1) return String(sorted[0]);
 
     const isConsecutive = sorted.every((period, index) => {
@@ -80,12 +81,16 @@ function CourseCard({
                         enrolled,
                         registrationOpen = false,
                         quickIndex,
-                        showEnrollButton = false,
                         compact = false,
                         onToggleLike,
                         onToggleTimetable,
-                        onEnrollCourse
+                        onEnrollCourse,
+                        onCancelEnrollCourse
                     }) {
+    const isEnrolled = Boolean(enrolled);
+    const isInTimetable = Boolean(inTimetable);
+    const isRegistrationMode = Boolean(registrationOpen);
+
     const badges = (course.badges || course.tags || []).filter(
         (badge) => badge !== "영강"
     );
@@ -94,41 +99,83 @@ function CourseCard({
     const scheduleText = getScheduleText(course);
     const roomText = getRoomText(course);
 
-    const isRegistrationMode = registrationOpen || showEnrollButton;
-    const canAddToTimetable = !inTimetable && !blockReason;
-    const canEnroll = !enrolled && !blockReason;
+    /*
+      상태 우선순위
+
+      수강신청 ON:
+      - 신청 완료: 수강 취소
+      - 미신청 + 중복 없음: 신청
+      - 미신청 + 중복 있음: blockReason
+
+      수강신청 OFF:
+      - 신청 완료: 신청완료 잠금
+      - 시간표에 있음: 빼기
+      - 시간표에 없음: 시간표에 추가
+    */
+    const isLockedAfterRegistration = !isRegistrationMode && isEnrolled;
+    const disabled =
+        isLockedAfterRegistration || (Boolean(blockReason) && !isEnrolled);
 
     const handleMainAction = () => {
+        if (disabled) return;
+
         if (isRegistrationMode) {
-            if (canEnroll) onEnrollCourse(course.id);
+            if (isEnrolled) {
+                onCancelEnrollCourse?.(course.id);
+                return;
+            }
+
+            if (!blockReason) {
+                onEnrollCourse?.(course.id);
+            }
+
             return;
         }
 
-        if (inTimetable || canAddToTimetable) {
-            onToggleTimetable(course.id);
+        if (!isEnrolled) {
+            onToggleTimetable?.(course.id);
         }
     };
 
     const getMainButtonText = () => {
-        if (inTimetable && !isRegistrationMode) return "빼기";
+        if (isRegistrationMode) {
+            if (isEnrolled) return "수강 취소";
+            if (blockReason) return blockReason;
+            return "신청";
+        }
+
+        if (isEnrolled) return "신청완료";
+        if (isInTimetable) return "빼기";
         if (blockReason) return blockReason;
+
         return compact ? "추가" : "시간표에 추가";
     };
 
     const getMainButtonVariant = () => {
-        if (blockReason || enrolled) return "disabled";
-        if (inTimetable && !isRegistrationMode) return "secondary";
+        if (isLockedAfterRegistration) return "disabled";
+        if (blockReason && !isEnrolled) return "disabled";
+
+        if (isRegistrationMode) {
+            if (isEnrolled) return "secondary";
+            return "blue";
+        }
+
+        if (isInTimetable) return "secondary";
         return "blue";
     };
 
-    const disabled = Boolean(blockReason) || Boolean(enrolled);
+    const articleClassName = [
+        "course-card",
+        compact ? "compact" : "",
+        isRegistrationMode ? "registration-mode" : "",
+        isEnrolled ? "enrolled-card" : "",
+        blockReason ? "conflict" : ""
+    ]
+        .filter(Boolean)
+        .join(" ");
 
     return (
-        <article
-            className={`course-card ${compact ? "compact" : ""} ${
-                isRegistrationMode ? "registration-mode" : ""
-            } ${blockReason ? "conflict" : ""}`}
-        >
+        <article className={articleClassName}>
             <div className="course-card-main">
                 <div className="course-title-line">
                     <h3 title={course.title}>{course.title}</h3>
@@ -178,27 +225,23 @@ function CourseCard({
 
             {isRegistrationMode ? (
                 <button
-                    className={`enroll-hit-area ${disabled ? "disabled" : ""}`}
+                    className={`enroll-hit-area ${disabled ? "disabled" : ""} ${
+                        isEnrolled ? "cancel-mode" : "enroll-mode"
+                    }`}
                     disabled={disabled}
                     onClick={handleMainAction}
                 >
-          <span className="enroll-main-text">
-            {enrolled ? "신청완료" : blockReason || "신청"}
-          </span>
+                    <span className="enroll-main-text">{getMainButtonText()}</span>
 
-                    {!enrolled && !blockReason && quickIndex && (
-                        <span className="enroll-shortcut">Ctrl + {quickIndex}</span>
-                    )}
-
-                    {!enrolled && !blockReason && !quickIndex && (
-                        <span className="enroll-shortcut">오른쪽 전체 클릭 가능</span>
+                    {!isEnrolled && !blockReason && quickIndex && (
+                        <span className="enroll-shortcut">Alt/⌥ + {quickIndex}</span>
                     )}
                 </button>
             ) : (
                 <div className="course-actions">
                     <button
                         className={`heart-btn ${liked ? "liked" : ""}`}
-                        onClick={() => onToggleLike(course.id)}
+                        onClick={() => onToggleLike?.(course.id)}
                     >
                         {compact ? (liked ? "♥" : "♡") : `관심 ${liked ? "♥" : "♡"}`}
                     </button>

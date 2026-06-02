@@ -1,66 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { REGISTRATION_CONFIG } from "../config/registrationConfig";
 
 import useCourses from "../hooks/useCourses";
+import { useTimetableWideMode } from "../hooks/useTimetableWideMode";
+import { useEnrollmentQueue } from "../hooks/useEnrollmentQueue";
+
 import CourseCard from "../components/CourseCard.jsx";
 import Timetable from "../components/Timetable.jsx";
+import EnrollmentQueueOverlay from "../components/EnrollmentQueueOverlay.jsx";
+
 import { getBlockReason } from "../utils/timeUtils";
-import { useTimetableWideMode } from "../hooks/useTimetableWideMode";
+import { SORT_OPTIONS, sortCourses } from "../utils/courseSortUtils";
 
-const DAY_ORDER = {
-    월: 1,
-    화: 2,
-    수: 3,
-    목: 4,
-    금: 5,
-    토: 6,
-    일: 7
-};
-
-function getFirstSessionSortValue(course) {
-    const sessions = course.schedule?.sessions || [];
-
-    if (sessions.length === 0) {
-        return Number.MAX_SAFE_INTEGER;
-    }
-
-    const firstSession = sessions
-        .map((session) => ({
-            dayValue: DAY_ORDER[session.day] || 99,
-            periodValue: Math.min(...(session.periods || [99]))
-        }))
-        .sort((a, b) => {
-            if (a.dayValue !== b.dayValue) {
-                return a.dayValue - b.dayValue;
-            }
-
-            return a.periodValue - b.periodValue;
-        })[0];
-
-    return firstSession.dayValue * 100 + firstSession.periodValue;
-}
-
-function sortCourses(courses, sortType) {
-    const copied = [...courses];
-
-    if (sortType === "name") {
-        return copied.sort((a, b) => a.title.localeCompare(b.title, "ko"));
-    }
-
-    if (sortType === "credit") {
-        return copied.sort((a, b) => Number(b.credit || 0) - Number(a.credit || 0));
-    }
-
-    return copied.sort((a, b) => {
-        const timeA = getFirstSessionSortValue(a);
-        const timeB = getFirstSessionSortValue(b);
-
-        if (timeA !== timeB) {
-            return timeA - timeB;
-        }
-
-        return a.title.localeCompare(b.title, "ko");
-    });
+function includesCourseId(ids = [], courseId) {
+    return ids.map(Number).includes(Number(courseId));
 }
 
 function CartPage({
@@ -71,30 +25,49 @@ function CartPage({
                       registrationOpen,
                       onToggleLike,
                       onToggleTimetable,
-                      onEnrollCourse
+                      onEnrollCourse,
+                      onCancelEnrollCourse
                   }) {
     const { courses, loading, error } = useCourses();
 
     const [viewType, setViewType] = useState("list");
     const [sortType, setSortType] = useState("time");
-    const [queueMessage, setQueueMessage] = useState("");
-
-    const timetableShellRef = useRef(null);
-    const [timetableShellHeight, setTimetableShellHeight] = useState(null);
+    const pageRootRef = useRef(null);
 
     useTimetableWideMode(viewType === "timetable");
 
+    const normalizedLikedCourseIds = useMemo(
+        () => likedCourseIds.map(Number),
+        [likedCourseIds]
+    );
+
+    const normalizedTimetableCourseIds = useMemo(
+        () => timetableCourseIds.map(Number),
+        [timetableCourseIds]
+    );
+
+    const normalizedEnrolledCourseIds = useMemo(
+        () => enrolledCourseIds.map(Number),
+        [enrolledCourseIds]
+    );
+
     const likedCourses = useMemo(() => {
-        return courses.filter((course) => likedCourseIds.includes(course.id));
-    }, [courses, likedCourseIds]);
+        return courses.filter((course) =>
+            includesCourseId(normalizedLikedCourseIds, course.id)
+        );
+    }, [courses, normalizedLikedCourseIds]);
 
     const timetableCourses = useMemo(() => {
-        return courses.filter((course) => timetableCourseIds.includes(course.id));
-    }, [courses, timetableCourseIds]);
+        return courses.filter((course) =>
+            includesCourseId(normalizedTimetableCourseIds, course.id)
+        );
+    }, [courses, normalizedTimetableCourseIds]);
 
     const enrolledCourses = useMemo(() => {
-        return courses.filter((course) => enrolledCourseIds.includes(course.id));
-    }, [courses, enrolledCourseIds]);
+        return courses.filter((course) =>
+            includesCourseId(normalizedEnrolledCourseIds, course.id)
+        );
+    }, [courses, normalizedEnrolledCourseIds]);
 
     const displayLikedCourses = useMemo(() => {
         return sortCourses(likedCourses, sortType);
@@ -102,85 +75,144 @@ function CartPage({
 
     // 수강신청 시간이 아닐 때는 시간표 기준으로 중복 판단
     // 수강신청 시간이 열렸을 때는 실제 신청된 과목 기준으로 중복 판단
-    const baseCourses = registrationOpen ? enrolledCourses : timetableCourses;
+    const baseCourses = useMemo(() => {
+        return registrationOpen ? enrolledCourses : timetableCourses;
+    }, [registrationOpen, enrolledCourses, timetableCourses]);
+
+    const {
+        queueState,
+        isQueueRunning,
+        startEnrollment,
+        startCancelEnrollment
+    } = useEnrollmentQueue(onEnrollCourse, onCancelEnrollCourse);
+
+    const getCourseByIdFromList = useCallback(
+        (courseId) => {
+            return (
+                courses.find((course) => Number(course.id) === Number(courseId)) || {
+                    id: courseId,
+                    title: "선택한 과목"
+                }
+            );
+        },
+        [courses]
+    );
 
     const handleEnroll = useCallback(
-        async (courseId) => {
-            const result = await onEnrollCourse(courseId);
+        (courseId) => {
+            const targetCourse = getCourseByIdFromList(courseId);
 
-            if (result.success) {
-                setQueueMessage(
-                    `${result.order}번째 순서입니다. TIP) ${
-                        result.tip || "행운을 빌어요!"
-                    }`
-                );
-            } else {
-                setQueueMessage(result.message);
+            const alreadyEnrolled = normalizedEnrolledCourseIds.includes(
+                Number(courseId)
+            );
+
+            const blockReason = alreadyEnrolled
+                ? "이미 신청한 과목입니다."
+                : getBlockReason(targetCourse, baseCourses);
+
+            if (blockReason) {
+                alert(blockReason);
+
+                return Promise.resolve({
+                    success: false,
+                    message: blockReason
+                });
             }
 
-            return result;
+            return startEnrollment(targetCourse);
         },
-        [onEnrollCourse]
+        [
+            getCourseByIdFromList,
+            normalizedEnrolledCourseIds,
+            baseCourses,
+            startEnrollment
+        ]
+    );
+
+    const handleCancelEnroll = useCallback(
+        (courseId) => {
+            const targetCourse = getCourseByIdFromList(courseId);
+
+            const confirmed = window.confirm(
+                `"${targetCourse.title}" 과목의 수강신청을 정말 취소하시겠습니까?`
+            );
+
+            if (!confirmed) {
+                return Promise.resolve({
+                    success: false,
+                    message: "수강취소가 취소되었습니다."
+                });
+            }
+
+            return startCancelEnrollment(targetCourse);
+        },
+        [getCourseByIdFromList, startCancelEnrollment]
     );
 
     useEffect(() => {
-        if (viewType !== "timetable") {
-            setTimetableShellHeight(null);
-            return;
-        }
+        if (!registrationOpen) return;
 
-        const updateTimetableHeight = () => {
-            if (!timetableShellRef.current) return;
-
-            const rect = timetableShellRef.current.getBoundingClientRect();
-            const bottomSafeGap = 24;
-            const availableHeight = window.innerHeight - rect.top - bottomSafeGap;
-
-            setTimetableShellHeight(Math.max(360, availableHeight));
+        const focusPage = () => {
+            pageRootRef.current?.focus({ preventScroll: true });
         };
 
-        updateTimetableHeight();
+        focusPage();
 
-        const animationFrameId = window.requestAnimationFrame(updateTimetableHeight);
-        const timeoutId = window.setTimeout(updateTimetableHeight, 0);
-
-        window.addEventListener("resize", updateTimetableHeight);
+        const frameId = window.requestAnimationFrame(focusPage);
+        const timeoutId = window.setTimeout(focusPage, 100);
 
         return () => {
-            window.cancelAnimationFrame(animationFrameId);
+            window.cancelAnimationFrame(frameId);
             window.clearTimeout(timeoutId);
-            window.removeEventListener("resize", updateTimetableHeight);
         };
-    }, [
-        viewType,
-        displayLikedCourses.length,
-        timetableCourses.length,
-        registrationOpen
-    ]);
+    }, [registrationOpen]);
 
     useEffect(() => {
-        if (!quickEnroll && !registrationOpen) return;
+        if (!registrationOpen) return;
+        if (isQueueRunning) return;
 
         const handleKeyDown = (event) => {
-            if (!event.ctrlKey) return;
+            if (!event.altKey) return;
 
-            const index = Number(event.key) - 1;
+            const digitMatch = event.code.match(/^Digit([1-9])$/);
 
-            if (Number.isNaN(index) || index < 0) return;
+            if (!digitMatch) return;
 
-            const targetCourse = displayLikedCourses[index];
+            const number = Number(digitMatch[1]);
+            const targetCourse = displayLikedCourses[number - 1];
 
-            if (targetCourse) {
-                handleEnroll(targetCourse.id);
-            }
+            if (!targetCourse) return;
+
+            const alreadyEnrolled = includesCourseId(
+                normalizedEnrolledCourseIds,
+                targetCourse.id
+            );
+
+            const blockReason = alreadyEnrolled
+                ? ""
+                : getBlockReason(targetCourse, baseCourses);
+
+            if (alreadyEnrolled || blockReason) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            handleEnroll(targetCourse.id);
         };
 
-        window.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keydown", handleKeyDown, true);
 
         return () => {
-            window.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown, true);
         };
-    }, [quickEnroll, registrationOpen, displayLikedCourses, handleEnroll]);
+    }, [
+        registrationOpen,
+        isQueueRunning,
+        displayLikedCourses,
+        normalizedEnrolledCourseIds,
+        baseCourses,
+        handleEnroll
+    ]);
 
     if (loading) {
         return <div className="loading">관심과목을 불러오는 중...</div>;
@@ -191,7 +223,11 @@ function CartPage({
     }
 
     return (
-        <div className="content-page cart-page">
+        <div
+            ref={pageRootRef}
+            className="content-page"
+            tabIndex={-1}
+        >
             <h2 className="page-title">내 관심과목</h2>
 
             <section className="result-section">
@@ -199,32 +235,42 @@ function CartPage({
                     <strong>관심과목 {likedCourses.length}개</strong>
 
                     <div className="view-controls">
-                        <span>정렬</span>
+                        <span className="control-label">정렬</span>
 
-                        <select
-                            value={sortType}
-                            onChange={(event) => setSortType(event.target.value)}
-                        >
-                            <option value="time">시간순</option>
-                            <option value="name">이름순</option>
-                            <option value="credit">학점순</option>
-                        </select>
+                        <div className="segmented-control sort-chip-group">
+                            {SORT_OPTIONS.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    className={`sort-chip ${
+                                        sortType === option.value ? "active" : ""
+                                    }`}
+                                    onClick={() => setSortType(option.value)}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
 
-                        <span>보기</span>
+                        <span className="control-label">보기</span>
 
-                        <button
-                            className={viewType === "list" ? "selected-view" : ""}
-                            onClick={() => setViewType("list")}
-                        >
-                            리스트
-                        </button>
+                        <div className="segmented-control view-mode-group">
+                            <button
+                                type="button"
+                                className={viewType === "list" ? "selected-view" : ""}
+                                onClick={() => setViewType("list")}
+                            >
+                                리스트
+                            </button>
 
-                        <button
-                            className={viewType === "timetable" ? "selected-view" : ""}
-                            onClick={() => setViewType("timetable")}
-                        >
-                            시간표
-                        </button>
+                            <button
+                                type="button"
+                                className={viewType === "timetable" ? "selected-view" : ""}
+                                onClick={() => setViewType("timetable")}
+                            >
+                                시간표
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -237,19 +283,15 @@ function CartPage({
                 )}
 
                 {likedCourses.length > 0 && viewType === "timetable" && (
-                    <div
-                        ref={timetableShellRef}
-                        className="timetable-view-shell"
-                        style={
-                            timetableShellHeight
-                                ? { height: `${timetableShellHeight}px` }
-                                : undefined
-                        }
-                    >
+                    <div className="timetable-view-shell">
                         <div className="timetable-fixed-panel">
                             <Timetable
                                 courses={timetableCourses}
                                 maxCredits={REGISTRATION_CONFIG.maxCredits}
+                                registrationOpen={registrationOpen}
+                                enrolledCourseIds={normalizedEnrolledCourseIds}
+                                onEnrollCourse={handleEnroll}
+                                onCancelEnrollCourse={handleCancelEnroll}
                                 onRemoveCourse={onToggleTimetable}
                             />
                         </div>
@@ -257,8 +299,8 @@ function CartPage({
                         <div className="course-list narrow timetable-candidate-list">
                             {displayLikedCourses.map((course, index) => {
                                 const alreadySelected = registrationOpen
-                                    ? enrolledCourseIds.includes(course.id)
-                                    : timetableCourseIds.includes(course.id);
+                                    ? includesCourseId(normalizedEnrolledCourseIds, course.id)
+                                    : includesCourseId(normalizedTimetableCourseIds, course.id);
 
                                 const blockReason = alreadySelected
                                     ? ""
@@ -268,17 +310,26 @@ function CartPage({
                                     <CourseCard
                                         key={course.id}
                                         course={course}
-                                        liked={likedCourseIds.includes(course.id)}
-                                        inTimetable={timetableCourseIds.includes(course.id)}
-                                        enrolled={enrolledCourseIds.includes(course.id)}
+                                        liked={includesCourseId(normalizedLikedCourseIds, course.id)}
+                                        inTimetable={includesCourseId(
+                                            normalizedTimetableCourseIds,
+                                            course.id
+                                        )}
+                                        enrolled={includesCourseId(
+                                            normalizedEnrolledCourseIds,
+                                            course.id
+                                        )}
                                         blockReason={blockReason}
                                         compact={true}
                                         registrationOpen={registrationOpen}
                                         showEnrollButton={quickEnroll || registrationOpen}
-                                        quickIndex={index + 1}
+                                        quickIndex={
+                                            registrationOpen && index < 9 ? index + 1 : undefined
+                                        }
                                         onToggleLike={onToggleLike}
                                         onToggleTimetable={onToggleTimetable}
                                         onEnrollCourse={handleEnroll}
+                                        onCancelEnrollCourse={handleCancelEnroll}
                                     />
                                 );
                             })}
@@ -290,8 +341,8 @@ function CartPage({
                     <div className="course-list">
                         {displayLikedCourses.map((course, index) => {
                             const alreadySelected = registrationOpen
-                                ? enrolledCourseIds.includes(course.id)
-                                : timetableCourseIds.includes(course.id);
+                                ? includesCourseId(normalizedEnrolledCourseIds, course.id)
+                                : includesCourseId(normalizedTimetableCourseIds, course.id);
 
                             const blockReason = alreadySelected
                                 ? ""
@@ -301,24 +352,33 @@ function CartPage({
                                 <CourseCard
                                     key={course.id}
                                     course={course}
-                                    liked={likedCourseIds.includes(course.id)}
-                                    inTimetable={timetableCourseIds.includes(course.id)}
-                                    enrolled={enrolledCourseIds.includes(course.id)}
+                                    liked={includesCourseId(normalizedLikedCourseIds, course.id)}
+                                    inTimetable={includesCourseId(
+                                        normalizedTimetableCourseIds,
+                                        course.id
+                                    )}
+                                    enrolled={includesCourseId(
+                                        normalizedEnrolledCourseIds,
+                                        course.id
+                                    )}
                                     blockReason={blockReason}
                                     registrationOpen={registrationOpen}
                                     showEnrollButton={quickEnroll || registrationOpen}
-                                    quickIndex={index + 1}
+                                    quickIndex={
+                                        registrationOpen && index < 9 ? index + 1 : undefined
+                                    }
                                     onToggleLike={onToggleLike}
                                     onToggleTimetable={onToggleTimetable}
                                     onEnrollCourse={handleEnroll}
+                                    onCancelEnrollCourse={handleCancelEnroll}
                                 />
                             );
                         })}
                     </div>
                 )}
-
-                {queueMessage && <div className="queue-message">{queueMessage}</div>}
             </section>
+
+            <EnrollmentQueueOverlay queue={queueState} />
         </div>
     );
 }

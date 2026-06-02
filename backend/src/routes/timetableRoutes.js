@@ -7,7 +7,9 @@ import {
     getLiked,
     toggleLiked,
     enroll,
-    getEnrollment
+    getEnrollment,
+    cancelEnrollCourseController,
+    resetTimetableController
 } from "../controllers/timetableController.js";
 
 const router = express.Router();
@@ -22,4 +24,7 @@ router.post("/liked/toggle", toggleLiked);
 router.get("/enroll/status", getEnrollment);
 router.post("/enroll", enroll);
 
+router.delete("/enroll/:courseId", cancelEnrollCourseController);
+
+router.post("/reset", resetTimetableController);
 export default router;

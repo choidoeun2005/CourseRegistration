@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { REGISTRATION_CONFIG } from "../config/registrationConfig";
 
 import useCourses from "../hooks/useCourses";
+import { useTimetableWideMode } from "../hooks/useTimetableWideMode";
+import { useEnrollmentQueue } from "../hooks/useEnrollmentQueue";
+
 import FilterPanel from "../components/FilterPanel.jsx";
 import CourseCard from "../components/CourseCard.jsx";
 import Timetable from "../components/Timetable.jsx";
+import EnrollmentQueueOverlay from "../components/EnrollmentQueueOverlay.jsx";
+
 import { getBlockReason } from "../utils/timeUtils";
-import { useTimetableWideMode } from "../hooks/useTimetableWideMode";
 
 import {
     applyCourseFilters,
@@ -29,6 +34,10 @@ const DAY_ORDER = {
     일: 7
 };
 
+function includesCourseId(ids = [], courseId) {
+    return ids.map(Number).includes(Number(courseId));
+}
+
 function getFirstSessionSortValue(course) {
     const sessions = course.schedule?.sessions || [];
 
@@ -50,7 +59,10 @@ function getFirstSessionSortValue(course) {
 
     const first = sortedSessions[0];
 
-    return (DAY_ORDER[first.day] || 99) * 100 + Math.min(...(first.periods || [99]));
+    return (
+        (DAY_ORDER[first.day] || 99) * 100 +
+        Math.min(...(first.periods || [99]))
+    );
 }
 
 function getCapacityValue(course) {
@@ -101,7 +113,8 @@ function sortCourses(courses, sortType) {
     }
 
     return copied.sort((a, b) => {
-        const timeDiff = getFirstSessionSortValue(a) - getFirstSessionSortValue(b);
+        const timeDiff =
+            getFirstSessionSortValue(a) - getFirstSessionSortValue(b);
 
         if (timeDiff !== 0) return timeDiff;
 
@@ -116,28 +129,118 @@ function CourseListPage({
                             registrationOpen,
                             onToggleLike,
                             onToggleTimetable,
-                            onEnrollCourse
+                            onEnrollCourse,
+                            onCancelEnrollCourse
                         }) {
     const { courses, loading, error } = useCourses();
 
     const [filters, setFilters] = useState(createDefaultFilters());
     const [viewType, setViewType] = useState("list");
     const [sortType, setSortType] = useState("time");
-
-    const timetableShellRef = useRef(null);
-    const [timetableShellHeight, setTimetableShellHeight] = useState(null);
+    const pageRootRef = useRef(null);
 
     useTimetableWideMode(viewType === "timetable");
 
+    const normalizedLikedCourseIds = useMemo(
+        () => likedCourseIds.map(Number),
+        [likedCourseIds]
+    );
+
+    const normalizedTimetableCourseIds = useMemo(
+        () => timetableCourseIds.map(Number),
+        [timetableCourseIds]
+    );
+
+    const normalizedEnrolledCourseIds = useMemo(
+        () => enrolledCourseIds.map(Number),
+        [enrolledCourseIds]
+    );
+
     const timetableCourses = useMemo(() => {
-        return courses.filter((course) => timetableCourseIds.includes(course.id));
-    }, [courses, timetableCourseIds]);
+        return courses.filter((course) =>
+            includesCourseId(normalizedTimetableCourseIds, course.id)
+        );
+    }, [courses, normalizedTimetableCourseIds]);
 
     const enrolledCourses = useMemo(() => {
-        return courses.filter((course) => enrolledCourseIds.includes(course.id));
-    }, [courses, enrolledCourseIds]);
+        return courses.filter((course) =>
+            includesCourseId(normalizedEnrolledCourseIds, course.id)
+        );
+    }, [courses, normalizedEnrolledCourseIds]);
 
-    const baseCourses = registrationOpen ? enrolledCourses : timetableCourses;
+    const baseCourses = useMemo(() => {
+        return registrationOpen ? enrolledCourses : timetableCourses;
+    }, [registrationOpen, enrolledCourses, timetableCourses]);
+
+    const {
+        queueState,
+        isQueueRunning,
+        startEnrollment,
+        startCancelEnrollment
+    } = useEnrollmentQueue(onEnrollCourse, onCancelEnrollCourse);
+
+    const getCourseByIdFromList = useCallback(
+        (courseId) => {
+            return (
+                courses.find((course) => Number(course.id) === Number(courseId)) || {
+                    id: courseId,
+                    title: "선택한 과목"
+                }
+            );
+        },
+        [courses]
+    );
+
+    const handleQueuedEnroll = useCallback(
+        (courseId) => {
+            const targetCourse = getCourseByIdFromList(courseId);
+
+            const alreadyEnrolled = normalizedEnrolledCourseIds.includes(
+                Number(courseId)
+            );
+
+            const blockReason = alreadyEnrolled
+                ? "이미 신청한 과목입니다."
+                : getBlockReason(targetCourse, baseCourses);
+
+            if (blockReason) {
+                alert(blockReason);
+
+                return Promise.resolve({
+                    success: false,
+                    message: blockReason
+                });
+            }
+
+            return startEnrollment(targetCourse);
+        },
+        [
+            getCourseByIdFromList,
+            normalizedEnrolledCourseIds,
+            baseCourses,
+            startEnrollment
+        ]
+    );
+
+    const handleQueuedCancelEnroll = useCallback(
+        (courseId) => {
+            const targetCourse = getCourseByIdFromList(courseId);
+
+            const confirmed = window.confirm(
+                `"${targetCourse.title}" 과목의 수강신청을 정말 취소하시겠습니까?`
+            );
+
+            if (!confirmed) {
+                return Promise.resolve({
+                    success: false,
+                    message: "수강취소가 취소되었습니다."
+                });
+            }
+
+            return startCancelEnrollment(targetCourse);
+        },
+        [getCourseByIdFromList, startCancelEnrollment]
+    );
 
     const filteredCourses = useMemo(() => {
         const result = applyCourseFilters(courses, filters, {
@@ -148,6 +251,71 @@ function CourseListPage({
         return sortCourses(result, sortType);
     }, [courses, filters, baseCourses, sortType]);
 
+    useEffect(() => {
+        if (!registrationOpen) return;
+
+        const focusPage = () => {
+            pageRootRef.current?.focus({ preventScroll: true });
+        };
+
+        focusPage();
+
+        const frameId = window.requestAnimationFrame(focusPage);
+        const timeoutId = window.setTimeout(focusPage, 100);
+
+        return () => {
+            window.cancelAnimationFrame(frameId);
+            window.clearTimeout(timeoutId);
+        };
+    }, [registrationOpen]);
+
+    useEffect(() => {
+        if (!registrationOpen) return;
+        if (isQueueRunning) return;
+
+        const handleKeyDown = (event) => {
+            if (!event.altKey) return;
+
+            const digitMatch = event.code.match(/^Digit([1-9])$/);
+
+            if (!digitMatch) return;
+
+            const number = Number(digitMatch[1]);
+            const targetCourse = filteredCourses[number - 1];
+
+            if (!targetCourse) return;
+
+            const alreadyEnrolled = includesCourseId(
+                normalizedEnrolledCourseIds,
+                targetCourse.id
+            );
+
+            const blockReason = alreadyEnrolled
+                ? ""
+                : getBlockReason(targetCourse, baseCourses);
+
+            if (alreadyEnrolled || blockReason) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            handleQueuedEnroll(targetCourse.id);
+        };
+
+        document.addEventListener("keydown", handleKeyDown, true);
+
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown, true);
+        };
+    }, [
+        registrationOpen,
+        isQueueRunning,
+        filteredCourses,
+        normalizedEnrolledCourseIds,
+        baseCourses,
+        handleQueuedEnroll
+    ]);
+
     if (loading) {
         return <div className="loading">강의 정보를 불러오는 중...</div>;
     }
@@ -157,7 +325,11 @@ function CourseListPage({
     }
 
     return (
-        <div className="content-page">
+        <div
+            ref={pageRootRef}
+            className="content-page"
+            tabIndex={-1}
+        >
             <FilterPanel
                 courses={courses}
                 filters={filters}
@@ -176,7 +348,9 @@ function CourseListPage({
                                 <button
                                     key={option.value}
                                     type="button"
-                                    className={`sort-chip ${sortType === option.value ? "active" : ""}`}
+                                    className={`sort-chip ${
+                                        sortType === option.value ? "active" : ""
+                                    }`}
                                     onClick={() => setSortType(option.value)}
                                 >
                                     {option.label}
@@ -212,6 +386,10 @@ function CourseListPage({
                             <Timetable
                                 courses={timetableCourses}
                                 maxCredits={REGISTRATION_CONFIG.maxCredits}
+                                registrationOpen={registrationOpen}
+                                enrolledCourseIds={normalizedEnrolledCourseIds}
+                                onEnrollCourse={handleQueuedEnroll}
+                                onCancelEnrollCourse={handleQueuedCancelEnroll}
                                 onRemoveCourse={onToggleTimetable}
                             />
                         </div>
@@ -219,8 +397,8 @@ function CourseListPage({
                         <div className="course-list narrow timetable-candidate-list">
                             {filteredCourses.map((course, index) => {
                                 const alreadySelected = registrationOpen
-                                    ? enrolledCourseIds.includes(course.id)
-                                    : timetableCourseIds.includes(course.id);
+                                    ? includesCourseId(normalizedEnrolledCourseIds, course.id)
+                                    : includesCourseId(normalizedTimetableCourseIds, course.id);
 
                                 const blockReason = alreadySelected
                                     ? ""
@@ -230,16 +408,25 @@ function CourseListPage({
                                     <CourseCard
                                         key={course.id}
                                         course={course}
-                                        liked={likedCourseIds.includes(course.id)}
-                                        inTimetable={timetableCourseIds.includes(course.id)}
-                                        enrolled={enrolledCourseIds.includes(course.id)}
+                                        liked={includesCourseId(normalizedLikedCourseIds, course.id)}
+                                        inTimetable={includesCourseId(
+                                            normalizedTimetableCourseIds,
+                                            course.id
+                                        )}
+                                        enrolled={includesCourseId(
+                                            normalizedEnrolledCourseIds,
+                                            course.id
+                                        )}
                                         blockReason={blockReason}
                                         compact={true}
                                         registrationOpen={registrationOpen}
-                                        quickIndex={index + 1}
+                                        quickIndex={
+                                            registrationOpen && index < 9 ? index + 1 : undefined
+                                        }
                                         onToggleLike={onToggleLike}
                                         onToggleTimetable={onToggleTimetable}
-                                        onEnrollCourse={onEnrollCourse}
+                                        onEnrollCourse={handleQueuedEnroll}
+                                        onCancelEnrollCourse={handleQueuedCancelEnroll}
                                     />
                                 );
                             })}
@@ -251,8 +438,8 @@ function CourseListPage({
                     <div className="course-list">
                         {filteredCourses.map((course, index) => {
                             const alreadySelected = registrationOpen
-                                ? enrolledCourseIds.includes(course.id)
-                                : timetableCourseIds.includes(course.id);
+                                ? includesCourseId(normalizedEnrolledCourseIds, course.id)
+                                : includesCourseId(normalizedTimetableCourseIds, course.id);
 
                             const blockReason = alreadySelected
                                 ? ""
@@ -262,21 +449,32 @@ function CourseListPage({
                                 <CourseCard
                                     key={course.id}
                                     course={course}
-                                    liked={likedCourseIds.includes(course.id)}
-                                    inTimetable={timetableCourseIds.includes(course.id)}
-                                    enrolled={enrolledCourseIds.includes(course.id)}
+                                    liked={includesCourseId(normalizedLikedCourseIds, course.id)}
+                                    inTimetable={includesCourseId(
+                                        normalizedTimetableCourseIds,
+                                        course.id
+                                    )}
+                                    enrolled={includesCourseId(
+                                        normalizedEnrolledCourseIds,
+                                        course.id
+                                    )}
                                     blockReason={blockReason}
                                     registrationOpen={registrationOpen}
-                                    quickIndex={index + 1}
+                                    quickIndex={
+                                        registrationOpen && index < 9 ? index + 1 : undefined
+                                    }
                                     onToggleLike={onToggleLike}
                                     onToggleTimetable={onToggleTimetable}
-                                    onEnrollCourse={onEnrollCourse}
+                                    onEnrollCourse={handleQueuedEnroll}
+                                    onCancelEnrollCourse={handleQueuedCancelEnroll}
                                 />
                             );
                         })}
                     </div>
                 )}
             </section>
+
+            <EnrollmentQueueOverlay queue={queueState} />
         </div>
     );
 }

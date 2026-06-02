@@ -5,7 +5,9 @@ import {
     getLikedCourses,
     toggleLikedCourse,
     enrollCourse,
-    getEnrollStatus
+    cancelEnrollCourse,
+    getEnrollStatus,
+    resetTimetableState
 } from "../services/timetableService.js";
 
 export function getTimetable(req, res) {
@@ -54,4 +56,21 @@ export function enroll(req, res) {
 
 export function getEnrollment(req, res) {
     res.json(getEnrollStatus());
+}
+
+export function cancelEnrollCourseController(req, res) {
+    const { courseId } = req.params;
+
+    const result = cancelEnrollCourse(courseId);
+
+    if (!result.success) {
+        return res.status(400).json(result);
+    }
+
+    return res.json(result);
+}
+
+export function resetTimetableController(req, res) {
+    const result = resetTimetableState();
+    return res.json(result);
 }

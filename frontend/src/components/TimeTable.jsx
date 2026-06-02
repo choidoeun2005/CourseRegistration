@@ -95,7 +95,19 @@ function buildCourseBlocks(courses) {
     return blocks;
 }
 
-function Timetable({ courses = [], maxCredits = 22, onRemoveCourse }) {
+function includesCourseId(ids = [], courseId) {
+    return ids.map(Number).includes(Number(courseId));
+}
+
+function Timetable({
+                       courses = [],
+                       maxCredits = 22,
+                       registrationOpen = false,
+                       enrolledCourseIds = [],
+                       onEnrollCourse,
+                       onCancelEnrollCourse,
+                       onRemoveCourse
+                   }) {
     const totalCredits = getTotalCredits(courses);
 
     const safeMaxCredits = Number(maxCredits) > 0 ? Number(maxCredits) : 22;
@@ -145,8 +157,10 @@ function Timetable({ courses = [], maxCredits = 22, onRemoveCourse }) {
                 </div>
 
                 <span className="timetable-hint">
-    과목 우클릭 시 시간표에서 제거
-  </span>
+  {registrationOpen
+      ? "파란색 과목 좌클릭: 수강신청 · 빨간색 과목 우클릭: 수강취소"
+      : "과목 우클릭 시 시간표에서 제거"}
+</span>
             </div>
 
             <div className="timetable-grid">
@@ -185,35 +199,67 @@ function Timetable({ courses = [], maxCredits = 22, onRemoveCourse }) {
                 ))}
 
                 {/* 실제 과목 블록 */}
-                {courseBlocks.map((block) => (
-                    <div
-                        key={block.key}
-                        className="tt-course-block"
-                        style={{
-                            gridColumn: block.gridColumn,
-                            gridRow: block.gridRow
-                        }}
-                        title={`${block.course.title} / ${block.course.professor || "미정"}${
-                            block.room ? ` / ${block.room}` : ""
-                        }\n우클릭하면 시간표에서 제거됩니다.`}
-                        onContextMenu={(event) => {
-                            event.preventDefault();
+                {courseBlocks.map((block) => {
+                    const isEnrolled = includesCourseId(enrolledCourseIds, block.course.id);
 
-                            if (onRemoveCourse) {
-                                onRemoveCourse(block.course.id);
+                    return (
+                        <div
+                            key={block.key}
+                            className={`tt-course-block ${
+                                isEnrolled ? "enrolled" : "pending"
+                            } ${registrationOpen ? "registration-clickable" : ""}`}
+                            style={{
+                                gridColumn: block.gridColumn,
+                                gridRow: block.gridRow
+                            }}
+                            title={
+                                registrationOpen
+                                    ? isEnrolled
+                                        ? "좌클릭하면 신청취소, 우클릭하면 시간표에서 제거됩니다."
+                                        : "좌클릭하면 수강신청, 우클릭하면 시간표에서 제거됩니다."
+                                    : "우클릭하면 시간표에서 제거됩니다."
                             }
-                        }}
-                    >
-                        <div className="tt-course-title-wrap">
-                            <div
-                                className="tt-course-title"
-                                style={{ WebkitLineClamp: block.lineClamp }}
-                            >
-                                {block.course.title}
+                            onClick={() => {
+                                if (!registrationOpen) return;
+
+                                if (isEnrolled) {
+                                    onCancelEnrollCourse?.(block.course.id);
+                                    return;
+                                }
+
+                                onEnrollCourse?.(block.course.id);
+                            }}
+                            onContextMenu={(event) => {
+                                event.preventDefault();
+
+                                // 수강신청 ON + 신청완료 과목
+                                // → 우클릭도 수강취소로 처리
+                                if (registrationOpen && isEnrolled) {
+                                    onCancelEnrollCourse?.(block.course.id);
+                                    return;
+                                }
+
+                                // 수강신청 OFF + 신청완료 과목
+                                // → 이미 확정된 과목이므로 시간표에서 제거 불가
+                                if (!registrationOpen && isEnrolled) {
+                                    return;
+                                }
+
+                                // 그 외에는 시간표에서 제거 가능
+                                onRemoveCourse?.(block.course.id);
+                            }}
+                        >
+                            <div className="tt-course-title-wrap">
+                                <div
+                                    className="tt-course-title"
+                                    style={{ WebkitLineClamp: block.lineClamp }}
+                                >
+                                    {block.course.title}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div
@@ -232,23 +278,59 @@ function Timetable({ courses = [], maxCredits = 22, onRemoveCourse }) {
 
                 {untimedCourses.length > 0 ? (
                     <div className="untimed-list">
-                        {untimedCourses.map((course) => (
-                            <div
-                                key={course.id}
-                                className="untimed-item"
-                                title="우클릭하면 시간표에서 제거됩니다."
-                                onContextMenu={(event) => {
-                                    event.preventDefault();
-                                    onRemoveCourse?.(course.id);
-                                }}
-                            >
-                                <strong>{course.title}</strong>
-                                <span>
-            {course.code} - {course.section} | {course.credit}학점
-          </span>
-                                <span>{course.professor || "교수 미정"}</span>
-                            </div>
-                        ))}
+                        {untimedCourses.map((course) => {
+                            const isEnrolled = includesCourseId(enrolledCourseIds, course.id);
+                            const canEnrollFromTimetable = registrationOpen && !isEnrolled;
+
+                            return (
+                                <div
+                                    key={course.id}
+                                    className={`untimed-item ${
+                                        isEnrolled ? "enrolled" : "pending"
+                                    } ${canEnrollFromTimetable ? "registration-clickable" : ""}`}
+                                    title={
+                                        registrationOpen
+                                            ? "좌클릭하면 수강신청, 우클릭하면 시간표에서 제거됩니다."
+                                            : "우클릭하면 시간표에서 제거됩니다."
+                                    }
+                                    onClick={() => {
+                                        if (!registrationOpen) return;
+
+                                        if (isEnrolled) {
+                                            onCancelEnrollCourse?.(course.id);
+                                            return;
+                                        }
+
+                                        onEnrollCourse?.(course.id);
+                                    }}
+                                    onContextMenu={(event) => {
+                                        event.preventDefault();
+
+                                        // 수강신청 ON + 신청완료 과목
+                                        // → 우클릭도 수강취소로 처리
+                                        if (registrationOpen && isEnrolled) {
+                                            onCancelEnrollCourse?.(block.course.id);
+                                            return;
+                                        }
+
+                                        // 수강신청 OFF + 신청완료 과목
+                                        // → 이미 확정된 과목이므로 시간표에서 제거 불가
+                                        if (!registrationOpen && isEnrolled) {
+                                            return;
+                                        }
+
+                                        // 그 외에는 시간표에서 제거 가능
+                                        onRemoveCourse?.(block.course.id);
+                                    }}
+                                >
+                                    <strong>{course.title}</strong>
+                                    <span>
+        {course.code} - {course.section} | {course.credit}학점
+      </span>
+                                    <span>{course.professor || "교수 미정"}</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="untimed-empty-text">

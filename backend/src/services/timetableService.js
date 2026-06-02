@@ -369,12 +369,39 @@ export function getEnrollStatus() {
  * ========================= */
 
 export function resetTimetableState() {
-    timetableCourseIds = [];
     likedCourseIds = [];
+    timetableCourseIds = [];
     enrolledCourseIds = [];
 
     return {
         success: true,
-        message: "시간표, 관심과목, 신청 상태가 초기화되었습니다."
+        message: "초기화되었습니다.",
+        likedCourseIds,
+        timetableCourseIds,
+        enrolledCourseIds
+    };
+}
+
+export function cancelEnrollCourse(courseId) {
+    const numericId = Number(courseId);
+
+    if (!enrolledCourseIds.includes(numericId)) {
+        return {
+            success: false,
+            status: "NOT_ENROLLED",
+            message: "신청된 과목이 아닙니다.",
+            enrolledCourseIds
+        };
+    }
+
+    enrolledCourseIds = enrolledCourseIds.filter(
+        (id) => Number(id) !== numericId
+    );
+
+    return {
+        success: true,
+        status: "CANCELLED",
+        message: "수강신청이 취소되었습니다.",
+        enrolledCourseIds
     };
 }

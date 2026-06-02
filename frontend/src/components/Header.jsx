@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-function Header({ registrationOpen, onToggleRegistration }) {
+function Header({ registrationOpen, onToggleRegistration, onReset }) {
     return (
         <header className="header">
             <div className="header-left">
@@ -20,6 +20,15 @@ function Header({ registrationOpen, onToggleRegistration }) {
                 onClick={onToggleRegistration}
             >
                 {registrationOpen ? "수강신청 OPEN" : "수강신청 CLOSED"}
+            </button>
+
+            <button
+                type="button"
+                className="header-reset-button"
+                onClick={onReset}
+                title="시연 상태 초기화"
+            >
+                리셋
             </button>
         </header>
     );

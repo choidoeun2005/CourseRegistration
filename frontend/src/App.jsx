@@ -16,7 +16,9 @@ import {
     toggleLikedCourse,
     addCourseToTimetable,
     removeCourseFromTimetable,
-    enrollCourse as requestEnrollCourse
+    enrollCourse as requestEnrollCourse,
+    cancelEnrollCourse as requestCancelEnrollCourse,
+    resetTimetableState as requestResetTimetableState
 } from "./api/timetableApi";
 
 import {
@@ -123,12 +125,42 @@ function App() {
         }
     };
 
+    const addUniqueId = (ids, courseId) => {
+        const numericId = Number(courseId);
+
+        if (ids.map(Number).includes(numericId)) {
+            return ids.map(Number);
+        }
+
+        return [...ids.map(Number), numericId];
+    };
+
+    const removeId = (ids, courseId) => {
+        const numericId = Number(courseId);
+        return ids.map(Number).filter((id) => id !== numericId);
+    };
+
     const enrollCourse = async (courseId) => {
         try {
-            const result = await requestEnrollCourse(courseId);
+            const numericId = Number(courseId);
+            const result = await requestEnrollCourse(numericId);
 
             if (result.success) {
-                setEnrolledCourseIds(result.enrolledCourseIds);
+                const nextEnrolledCourseIds =
+                    result.enrolledCourseIds && result.enrolledCourseIds.length > 0
+                        ? result.enrolledCourseIds.map(Number)
+                        : addUniqueId(enrolledCourseIds, numericId);
+
+                setEnrolledCourseIds(nextEnrolledCourseIds);
+
+                // 신청 성공하면 시간표에도 자동 추가
+                setTimetableCourseIds((prev) => addUniqueId(prev, numericId));
+
+                return {
+                    ...result,
+                    enrolledCourseIds: nextEnrolledCourseIds,
+                    timetableCourseIds: addUniqueId(timetableCourseIds, numericId)
+                };
             }
 
             return result;
@@ -137,6 +169,56 @@ function App() {
                 success: false,
                 message: error.message || "수강신청에 실패했습니다."
             };
+        }
+    };
+
+    const handleCancelEnrollCourse = async (courseId) => {
+        try {
+            const numericId = Number(courseId);
+            const result = await requestCancelEnrollCourse(numericId);
+
+            if (result.success) {
+                const nextEnrolledCourseIds =
+                    result.enrolledCourseIds && result.enrolledCourseIds.length > 0
+                        ? result.enrolledCourseIds.map(Number)
+                        : removeId(enrolledCourseIds, numericId);
+
+                setEnrolledCourseIds(nextEnrolledCourseIds);
+
+                // 취소하면 시간표에서도 제거
+                setTimetableCourseIds((prev) => removeId(prev, numericId));
+
+                return {
+                    ...result,
+                    enrolledCourseIds: nextEnrolledCourseIds,
+                    timetableCourseIds: removeId(timetableCourseIds, numericId)
+                };
+            }
+
+            return result;
+        } catch (error) {
+            return {
+                success: false,
+                message: error.message || "수강취소에 실패했습니다."
+            };
+        }
+    };
+
+    const handleResetAppState = async () => {
+        const confirmed = window.confirm(
+            "관심과목, 시간표, 수강신청 상태를 모두 초기화하시겠습니까?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const result = await requestResetTimetableState();
+
+            setLikedCourseIds(result.likedCourseIds || []);
+            setTimetableCourseIds(result.timetableCourseIds || []);
+            setEnrolledCourseIds(result.enrolledCourseIds || []);
+        } catch (error) {
+            alert(error.message || "초기화에 실패했습니다.");
         }
     };
 
@@ -170,6 +252,7 @@ function App() {
                 <Header
                     registrationOpen={registrationOpen}
                     onToggleRegistration={handleToggleRegistration}
+                    onReset={handleResetAppState}
                 />
             )}
 
@@ -192,6 +275,7 @@ function App() {
                                     onToggleLike={toggleLike}
                                     onToggleTimetable={toggleTimetable}
                                     onEnrollCourse={enrollCourse}
+                                    onCancelEnrollCourse={handleCancelEnrollCourse}
                                 />
                             ) : (
                                 <Navigate to="/login" />
@@ -212,6 +296,7 @@ function App() {
                                     onToggleLike={toggleLike}
                                     onToggleTimetable={toggleTimetable}
                                     onEnrollCourse={enrollCourse}
+                                    onCancelEnrollCourse={handleCancelEnrollCourse}
                                 />
                             ) : (
                                 <Navigate to="/login" />

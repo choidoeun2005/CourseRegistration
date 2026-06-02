@@ -40,3 +40,15 @@ export async function enrollCourse(courseId) {
         body: JSON.stringify({ courseId })
     });
 }
+
+export async function cancelEnrollCourse(courseId) {
+    return apiRequest(`/timetable/enroll/${courseId}`, {
+        method: "DELETE"
+    });
+}
+
+export async function resetTimetableState() {
+    return apiRequest("/timetable/reset", {
+        method: "POST"
+    });
+}
