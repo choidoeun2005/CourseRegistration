@@ -85,7 +85,9 @@ function CourseCard({
                         onToggleLike,
                         onToggleTimetable,
                         onEnrollCourse,
-                        onCancelEnrollCourse
+                        onCancelEnrollCourse,
+                        onMouseEnter,
+                        onMouseLeave
                     }) {
     const isEnrolled = Boolean(enrolled);
     const isInTimetable = Boolean(inTimetable);
@@ -175,7 +177,7 @@ function CourseCard({
         .join(" ");
 
     return (
-        <article className={articleClassName}>
+        <article className={articleClassName} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
             <div className="course-card-main">
                 <div className="course-title-line">
                     <h3 title={course.title}>{course.title}</h3>
