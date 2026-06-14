@@ -3843,6 +3843,14 @@ body.timetable-wide .untimed-course-box {
     background: #dcecff !important;
     border-left-color: #4d92cc !important;
 }
+
+.tt-bg-cell.card-hovered {
+    background: #d1fae5;
+}
+
+body.dark .tt-bg-cell.card-hovered {
+    background: #14532d;
+}
 /* =========================================================
    CourseCard enrollment/cancel state
 ========================================================= */
@@ -3934,4 +3942,41 @@ body.timetable-wide .untimed-course-box {
     background: #fff1ea;
     border-color: #e7b7bd;
     color: #b9472b;
+}
+
+.toast-container {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.toast {
+    padding: 14px 22px;
+    background: rgba(34, 34, 34, 0.92);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+    animation: toast-in 0.25s ease;
+}
+
+body.dark .toast {
+    background: rgba(240, 240, 240, 0.95);
+    color: #1e1e1e;
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

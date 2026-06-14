@@ -11,6 +11,8 @@ import CourseCard from "../components/CourseCard.jsx";
 import Timetable from "../components/Timetable.jsx";
 import EnrollmentQueueOverlay from "../components/EnrollmentQueueOverlay.jsx";
 
+import { getCourseSessions } from "../utils/timeUtils";
+
 import { getBlockReason } from "../utils/timeUtils";
 
 import {
@@ -137,6 +139,18 @@ function CourseListPage({
     const [filters, setFilters] = useState(createDefaultFilters());
     const [viewType, setViewType] = useState("list");
     const [sortType, setSortType] = useState("time");
+    const [hoveredCourseId, setHoveredCourseId] = useState(null);
+
+    const hoveredCells = useMemo(() => {
+        if (hoveredCourseId === null) return new Set();
+        const course = courses.find((c) => Number(c.id) === Number(hoveredCourseId));
+        if (!course) return new Set();
+        const cells = new Set();
+        getCourseSessions(course).forEach((session) => {
+            session.periods.forEach((period) => cells.add(`${session.day}-${period}`));
+        });
+        return cells;
+    }, [hoveredCourseId, courses]);
     const pageRootRef = useRef(null);
 
     useTimetableWideMode(viewType === "timetable");
@@ -388,6 +402,7 @@ function CourseListPage({
                                 maxCredits={REGISTRATION_CONFIG.maxCredits}
                                 registrationOpen={registrationOpen}
                                 enrolledCourseIds={normalizedEnrolledCourseIds}
+                                hoveredCells={hoveredCells}
                                 onEnrollCourse={handleQueuedEnroll}
                                 onCancelEnrollCourse={handleQueuedCancelEnroll}
                                 onRemoveCourse={onToggleTimetable}
@@ -427,6 +442,8 @@ function CourseListPage({
                                         onToggleTimetable={onToggleTimetable}
                                         onEnrollCourse={handleQueuedEnroll}
                                         onCancelEnrollCourse={handleQueuedCancelEnroll}
+                                        onMouseEnter={() => setHoveredCourseId(course.id)}
+                                        onMouseLeave={() => setHoveredCourseId(null)}
                                     />
                                 );
                             })}

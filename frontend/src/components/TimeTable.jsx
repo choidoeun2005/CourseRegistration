@@ -6,6 +6,7 @@ import {
     isTimeUndecided
 } from "../utils/timeUtils";
 
+
 const DAY_TO_COLUMN = {
     월: 2,
     화: 3,
@@ -104,6 +105,7 @@ function Timetable({
                        maxCredits = 22,
                        registrationOpen = false,
                        enrolledCourseIds = [],
+                       hoveredCells = new Set(),
                        onEnrollCourse,
                        onCancelEnrollCourse,
                        onRemoveCourse
@@ -191,7 +193,7 @@ function Timetable({
                         {DAYS.map((day, index) => (
                             <div
                                 key={`${day}-${period}`}
-                                className="tt-bg-cell"
+                                className={`tt-bg-cell${hoveredCells.has(`${day}-${period}`) ? " card-hovered" : ""}`}
                                 style={{ gridColumn: index + 2, gridRow: period + 1 }}
                             />
                         ))}

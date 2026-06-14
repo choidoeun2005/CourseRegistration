@@ -2,11 +2,14 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import Header from "./components/Header.jsx";
+import Toast from "./components/Toast.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import CourseListPage from "./pages/CourseListPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
 import MyCoursesPage from "./pages/MyCoursesPage.jsx";
 import RecommendPage from "./pages/RecommendPage.jsx";
+
+import useCourses from "./hooks/useCourses";
 
 import { fetchMe, updateUserSettings } from "./api/userApi";
 import {
@@ -38,6 +41,18 @@ function App() {
     const [quickEnroll, setQuickEnroll] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
     const [registrationOpen, setRegistrationOpen] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const { courses } = useCourses();
+
+    const getCourseTitle = (courseId) => {
+        const course = courses.find((c) => Number(c.id) === Number(courseId));
+        return course?.title || "강의";
+    };
+
+    const showToast = (message) => {
+        setToast({ message, id: Date.now() });
+    };
 
     useEffect(() => {
         document.body.classList.toggle("dark", darkMode);
@@ -100,8 +115,15 @@ function App() {
 
     const toggleLike = async (courseId) => {
         try {
+            const wasLiked = likedCourseIds.map(Number).includes(Number(courseId));
             const result = await toggleLikedCourse(courseId);
             setLikedCourseIds(result.likedCourseIds);
+
+            showToast(
+                `${getCourseTitle(courseId)} 강의를 관심과목${
+                    wasLiked ? "에서 제거" : "에 추가"
+                }하였습니다.`
+            );
         } catch (error) {
             alert(error.message || "관심과목 변경에 실패했습니다.");
         }
@@ -109,13 +131,21 @@ function App() {
 
     const toggleTimetable = async (courseId) => {
         try {
-            const isAlreadyInTimetable = timetableCourseIds.includes(courseId);
+            const isAlreadyInTimetable = timetableCourseIds
+                .map(Number)
+                .includes(Number(courseId));
 
             const result = isAlreadyInTimetable
                 ? await removeCourseFromTimetable(courseId)
                 : await addCourseToTimetable(courseId);
 
             setTimetableCourseIds(result.courses.map((course) => course.id));
+
+            showToast(
+                `${getCourseTitle(courseId)} 강의를 시간표${
+                    isAlreadyInTimetable ? "에서 제거" : "에 추가"
+                }하였습니다.`
+            );
 
             if (result.conflict) {
                 alert("시간표에 추가했지만 교시가 중복됩니다.");
@@ -341,6 +371,8 @@ function App() {
                     />
                 </Routes>
             </main>
+
+            <Toast toast={toast} onDismiss={() => setToast(null)} />
         </div>
     );
 }
