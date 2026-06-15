@@ -16,6 +16,9 @@ const DAY_TO_COLUMN = {
     토: 7
 };
 
+const HEADER_ROW_HEIGHT = 42;
+const PERIOD_ROW_HEIGHT = 54;
+
 function splitIntoConsecutiveBlocks(periods = []) {
     const sorted = [...new Set(periods)]
         .map(Number)
@@ -55,8 +58,8 @@ function splitIntoConsecutiveBlocks(periods = []) {
     return blocks;
 }
 
-function buildCourseBlocks(courses) {
-    const blocks = [];
+function buildCourseLayout(courses) {
+    const baseBlocks = [];
 
     courses.forEach((course) => {
         const sessions = getCourseSessions(course);
@@ -73,11 +76,10 @@ function buildCourseBlocks(courses) {
                 const startPeriod = block.start;
                 const endPeriod = block.end;
                 const span = endPeriod - startPeriod + 1;
-
-                // row 1 = header row, so 1교시는 grid row 2
                 const gridRowStart = startPeriod + 1;
+                const gridRowEnd = gridRowStart + span;
 
-                blocks.push({
+                baseBlocks.push({
                     key: `${course.id}-${sessionIndex}-${blockIndex}`,
                     course,
                     day,
@@ -85,19 +87,146 @@ function buildCourseBlocks(courses) {
                     startPeriod,
                     endPeriod,
                     span,
+                    periods: block.periods,
                     gridColumn: dayColumn,
-                    gridRow: `${gridRowStart} / span ${span}`,
-                    lineClamp: Math.max(2, span * 2)
+                    gridRowStart,
+                    gridRowEnd,
+                    lineClamp: Math.max(1, span)
                 });
             });
         });
     });
 
-    return blocks;
+    const cellCounts = baseBlocks.reduce((counts, block) => {
+        block.periods.forEach((period) => {
+            const key = `${block.gridColumn}-${period}`;
+            counts[key] = (counts[key] || 0) + 1;
+        });
+
+        return counts;
+    }, {});
+
+    const allBlocks = baseBlocks.flatMap((block) => {
+        const shouldSplit =
+            block.span > 1 &&
+            block.periods.some(
+                (period) => (cellCounts[`${block.gridColumn}-${period}`] || 0) > 1
+            );
+
+        if (!shouldSplit) return [block];
+
+        return block.periods.map((period, periodIndex) => {
+            const gridRowStart = period + 1;
+
+            return {
+                ...block,
+                key: `${block.key}-period-${periodIndex}`,
+                startPeriod: period,
+                endPeriod: period,
+                span: 1,
+                periods: [period],
+                gridRowStart,
+                gridRowEnd: gridRowStart + 1,
+                lineClamp: 1
+            };
+        });
+    });
+
+    const groups = [];
+    const assigned = new Set();
+    const rowLayerCounts = PERIODS.reduce((acc, period) => {
+        acc[period] = 1;
+        return acc;
+    }, {});
+
+    allBlocks.forEach((block, i) => {
+        if (assigned.has(i)) return;
+
+        const groupIndices = [i];
+        assigned.add(i);
+
+        let changed = true;
+        while (changed) {
+            changed = false;
+            allBlocks.forEach((other, j) => {
+                if (assigned.has(j)) return;
+                if (other.gridColumn !== block.gridColumn) return;
+
+                const overlapsWithGroup = groupIndices.some((gi) => {
+                    const gb = allBlocks[gi];
+                    return (
+                        gb.gridColumn === other.gridColumn &&
+                        gb.gridRowStart < other.gridRowEnd &&
+                        other.gridRowStart < gb.gridRowEnd
+                    );
+                });
+
+                if (overlapsWithGroup) {
+                    groupIndices.push(j);
+                    assigned.add(j);
+                    changed = true;
+                }
+            });
+        }
+
+        const groupBlocks = groupIndices.map((gi) => allBlocks[gi]);
+        const minRow = Math.min(...groupBlocks.map((b) => b.gridRowStart));
+        const maxRow = Math.max(...groupBlocks.map((b) => b.gridRowEnd));
+        const groupSpan = maxRow - minRow;
+        const stackCount = groupBlocks.length;
+
+        for (let row = minRow; row < maxRow; row += 1) {
+            const period = row - 1;
+            if (rowLayerCounts[period] !== undefined) {
+                rowLayerCounts[period] = Math.max(rowLayerCounts[period], stackCount);
+            }
+        }
+
+        groups.push({
+            key: `group-${i}`,
+            gridColumn: block.gridColumn,
+            gridRowStart: minRow,
+            gridRowEnd: maxRow,
+            blocks: groupBlocks.map((b, stackIndex) => {
+                const blockTopFrac = (b.gridRowStart - minRow) / groupSpan;
+                const blockHeightFrac = (b.gridRowEnd - b.gridRowStart) / groupSpan;
+
+                return {
+                    ...b,
+                    stackIndex,
+                    stackCount,
+                    topFrac: blockTopFrac + (blockHeightFrac * stackIndex) / stackCount,
+                    heightFrac: blockHeightFrac / stackCount,
+                    lineClamp: Math.max(1, Math.min(3, b.span * 2))
+                };
+            })
+        });
+    });
+
+    return { groups, rowLayerCounts };
 }
 
 function includesCourseId(ids = [], courseId) {
     return ids.map(Number).includes(Number(courseId));
+}
+
+function CourseSyllabusLink({ course, children, className = "" }) {
+    if (!course.syllabusUrl) {
+        return children;
+    }
+
+    return (
+        <a
+            className={className}
+            href={course.syllabusUrl}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            onContextMenu={(event) => event.stopPropagation()}
+        >
+            {children}
+        </a>
+    );
 }
 
 function Timetable({
@@ -106,6 +235,11 @@ function Timetable({
                        registrationOpen = false,
                        enrolledCourseIds = [],
                        hoveredCells = new Set(),
+                       courseColorMap = {},
+                       getBlockReason,
+                       activeTimetableTab = 1,
+                       onSwitchTimetableTab,
+                       onCellClick,
                        onEnrollCourse,
                        onCancelEnrollCourse,
                        onRemoveCourse
@@ -129,7 +263,14 @@ function Timetable({
 
     const timedCourses = courses.filter((course) => !isTimeUndecided(course));
     const untimedCourses = courses.filter(isTimeUndecided);
-    const courseBlocks = buildCourseBlocks(timedCourses);
+    const { groups: courseGroups, rowLayerCounts } = buildCourseLayout(timedCourses);
+    const gridTemplateRows = [
+        `${HEADER_ROW_HEIGHT}px`,
+        ...PERIODS.map(
+            (period) =>
+                `minmax(${PERIOD_ROW_HEIGHT * rowLayerCounts[period]}px, auto)`
+        )
+    ].join(" ");
 
     return (
         <section className="timetable-section">
@@ -158,14 +299,30 @@ function Timetable({
                     </div>
                 </div>
 
+                <div className="timetable-tab-bar timetable-summary-tabs">
+                    {[1, 2, 3, 4].map((tab) => (
+                        <button
+                            key={tab}
+                            type="button"
+                            className={`timetable-tab-btn${activeTimetableTab === tab ? " active" : ""}`}
+                            onClick={() => onSwitchTimetableTab?.(tab)}
+                        >
+                            시간표 {tab}
+                        </button>
+                    ))}
+                </div>
+
                 <span className="timetable-hint">
-  {registrationOpen
-      ? "파란색 과목 좌클릭: 수강신청 · 빨간색 과목 우클릭: 수강취소"
-      : "과목 우클릭 시 시간표에서 제거"}
-</span>
+                    {registrationOpen
+                        ? "빈 칸: 후보 보기 · 한 교시 최대 3과목 · 과목 클릭: 수강신청"
+                        : "빈 칸: 후보 보기 · 한 교시 최대 3과목 · 과목 우클릭: 제거"}
+                </span>
             </div>
 
-            <div className="timetable-grid">
+            <div
+                className="timetable-grid"
+                style={{ "--tt-grid-template-rows": gridTemplateRows }}
+            >
                 {/* 좌상단 빈칸 */}
                 <div className="tt-corner" style={{ gridColumn: 1, gridRow: 1 }} />
 
@@ -193,75 +350,111 @@ function Timetable({
                         {DAYS.map((day, index) => (
                             <div
                                 key={`${day}-${period}`}
-                                className={`tt-bg-cell${hoveredCells.has(`${day}-${period}`) ? " card-hovered" : ""}`}
+                                className={`tt-bg-cell tt-bg-cell-clickable${hoveredCells.has(`${day}-${period}`) ? " card-hovered" : ""}`}
                                 style={{ gridColumn: index + 2, gridRow: period + 1 }}
+                                title={`${day} ${period}교시 후보 보기`}
+                                onClick={() => onCellClick?.(day, period)}
                             />
                         ))}
                     </div>
                 ))}
 
-                {/* 실제 과목 블록 */}
-                {courseBlocks.map((block) => {
-                    const isEnrolled = includesCourseId(enrolledCourseIds, block.course.id);
+                {/* 과목 그룹 (겹치는 과목 포함) */}
+                {courseGroups.map((group) => (
+                    <div
+                        key={group.key}
+                        className="tt-course-group"
+                        style={{
+                            gridColumn: group.gridColumn,
+                            gridRow: `${group.gridRowStart} / ${group.gridRowEnd}`
+                        }}
+                    >
+                        {group.blocks.map((block) => {
+                            const isEnrolled = includesCourseId(enrolledCourseIds, block.course.id);
+                            const dotColor = courseColorMap[Number(block.course.id)] || "#2563eb";
+                            const blockReason =
+                                registrationOpen && !isEnrolled
+                                    ? getBlockReason?.(block.course) || ""
+                                    : "";
+                            const isEnrollmentBlocked = Boolean(blockReason);
 
-                    return (
-                        <div
-                            key={block.key}
-                            className={`tt-course-block ${
-                                isEnrolled ? "enrolled" : "pending"
-                            } ${registrationOpen ? "registration-clickable" : ""}`}
-                            style={{
-                                gridColumn: block.gridColumn,
-                                gridRow: block.gridRow
-                            }}
-                            title={
-                                registrationOpen
-                                    ? isEnrolled
-                                        ? "좌클릭하면 신청취소, 우클릭하면 시간표에서 제거됩니다."
-                                        : "좌클릭하면 수강신청, 우클릭하면 시간표에서 제거됩니다."
-                                    : "우클릭하면 시간표에서 제거됩니다."
-                            }
-                            onClick={() => {
-                                if (!registrationOpen) return;
-
-                                if (isEnrolled) {
-                                    onCancelEnrollCourse?.(block.course.id);
-                                    return;
-                                }
-
-                                onEnrollCourse?.(block.course.id);
-                            }}
-                            onContextMenu={(event) => {
-                                event.preventDefault();
-
-                                // 수강신청 ON + 신청완료 과목
-                                // → 우클릭도 수강취소로 처리
-                                if (registrationOpen && isEnrolled) {
-                                    onCancelEnrollCourse?.(block.course.id);
-                                    return;
-                                }
-
-                                // 수강신청 OFF + 신청완료 과목
-                                // → 이미 확정된 과목이므로 시간표에서 제거 불가
-                                if (!registrationOpen && isEnrolled) {
-                                    return;
-                                }
-
-                                // 그 외에는 시간표에서 제거 가능
-                                onRemoveCourse?.(block.course.id);
-                            }}
-                        >
-                            <div className="tt-course-title-wrap">
+                            return (
                                 <div
-                                    className="tt-course-title"
-                                    style={{ WebkitLineClamp: block.lineClamp }}
+                                    key={block.key}
+                                    className={`tt-course-block ${
+                                        isEnrolled ? "enrolled" : "pending"
+                                    } ${registrationOpen ? "registration-clickable" : ""} ${
+                                        isEnrollmentBlocked ? "enrollment-blocked" : ""
+                                    }`}
+                                    style={{
+                                        position: "absolute",
+                                        top: `${block.topFrac * 100}%`,
+                                        height: `${block.heightFrac * 100}%`,
+                                        left: 0,
+                                        width: "100%",
+                                        boxSizing: "border-box",
+                                        margin: 0
+                                    }}
+                                    title={
+                                        registrationOpen
+                                            ? isEnrolled
+                                                ? "좌클릭하면 신청취소, 우클릭하면 시간표에서 제거됩니다."
+                                                : isEnrollmentBlocked
+                                                    ? `${blockReason}: 수강신청할 수 없습니다.`
+                                                : "좌클릭하면 수강신청, 우클릭하면 시간표에서 제거됩니다."
+                                            : "우클릭하면 시간표에서 제거됩니다."
+                                    }
+                                    onClick={() => {
+                                        if (!registrationOpen) return;
+                                        if (isEnrollmentBlocked) return;
+
+                                        if (isEnrolled) {
+                                            onCancelEnrollCourse?.(block.course.id);
+                                            return;
+                                        }
+
+                                        onEnrollCourse?.(block.course.id);
+                                    }}
+                                    onContextMenu={(event) => {
+                                        event.preventDefault();
+
+                                        if (registrationOpen && isEnrolled) {
+                                            onCancelEnrollCourse?.(block.course.id);
+                                            return;
+                                        }
+
+                                        if (!registrationOpen && isEnrolled) {
+                                            return;
+                                        }
+
+                                        onRemoveCourse?.(block.course.id);
+                                    }}
                                 >
-                                    {block.course.title}
+                                    {dotColor && (
+                                        <span
+                                            className="course-color-dot tt-course-pin"
+                                            style={{ background: dotColor }}
+                                            aria-hidden="true"
+                                        />
+                                    )}
+                                    <div className="tt-course-title-wrap">
+                                        <CourseSyllabusLink
+                                            course={block.course}
+                                            className="tt-course-title-link"
+                                        >
+                                            <div
+                                                className="tt-course-title"
+                                                style={{ WebkitLineClamp: block.lineClamp }}
+                                            >
+                                                {block.course.title}
+                                            </div>
+                                        </CourseSyllabusLink>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                            );
+                        })}
+                    </div>
+                ))}
             </div>
 
             <div
@@ -283,20 +476,31 @@ function Timetable({
                         {untimedCourses.map((course) => {
                             const isEnrolled = includesCourseId(enrolledCourseIds, course.id);
                             const canEnrollFromTimetable = registrationOpen && !isEnrolled;
+                            const dotColor = courseColorMap[Number(course.id)];
+                            const blockReason =
+                                canEnrollFromTimetable
+                                    ? getBlockReason?.(course) || ""
+                                    : "";
+                            const isEnrollmentBlocked = Boolean(blockReason);
 
                             return (
                                 <div
                                     key={course.id}
                                     className={`untimed-item ${
                                         isEnrolled ? "enrolled" : "pending"
-                                    } ${canEnrollFromTimetable ? "registration-clickable" : ""}`}
+                                    } ${canEnrollFromTimetable ? "registration-clickable" : ""} ${
+                                        isEnrollmentBlocked ? "enrollment-blocked" : ""
+                                    }`}
                                     title={
                                         registrationOpen
-                                            ? "좌클릭하면 수강신청, 우클릭하면 시간표에서 제거됩니다."
+                                            ? isEnrollmentBlocked
+                                                ? `${blockReason}: 수강신청할 수 없습니다.`
+                                                : "좌클릭하면 수강신청, 우클릭하면 시간표에서 제거됩니다."
                                             : "우클릭하면 시간표에서 제거됩니다."
                                     }
                                     onClick={() => {
                                         if (!registrationOpen) return;
+                                        if (isEnrollmentBlocked) return;
 
                                         if (isEnrolled) {
                                             onCancelEnrollCourse?.(course.id);
@@ -308,27 +512,33 @@ function Timetable({
                                     onContextMenu={(event) => {
                                         event.preventDefault();
 
-                                        // 수강신청 ON + 신청완료 과목
-                                        // → 우클릭도 수강취소로 처리
                                         if (registrationOpen && isEnrolled) {
-                                            onCancelEnrollCourse?.(block.course.id);
+                                            onCancelEnrollCourse?.(course.id);
                                             return;
                                         }
 
-                                        // 수강신청 OFF + 신청완료 과목
-                                        // → 이미 확정된 과목이므로 시간표에서 제거 불가
                                         if (!registrationOpen && isEnrolled) {
                                             return;
                                         }
 
-                                        // 그 외에는 시간표에서 제거 가능
-                                        onRemoveCourse?.(block.course.id);
+                                        onRemoveCourse?.(course.id);
                                     }}
                                 >
-                                    <strong>{course.title}</strong>
+                                    {dotColor && (
+                                        <span
+                                            className="course-color-dot untimed-dot"
+                                            style={{ background: dotColor }}
+                                        />
+                                    )}
+                                    <CourseSyllabusLink
+                                        course={course}
+                                        className="untimed-course-title-link"
+                                    >
+                                        <strong>{course.title}</strong>
+                                    </CourseSyllabusLink>
                                     <span>
-        {course.code} - {course.section} | {course.credit}학점
-      </span>
+                                        {course.code} - {course.section} | {course.credit}학점
+                                    </span>
                                     <span>{course.professor || "교수 미정"}</span>
                                 </div>
                             );

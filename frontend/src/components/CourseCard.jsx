@@ -1,4 +1,7 @@
+import { useState } from "react";
+
 import Button from "./Button.jsx";
+import NAVER_PLACE_IDS_BY_BUILDING from "../data/naverPlaceIds.js";
 
 function getBadgeLabel(badge) {
     const labelMap = {
@@ -25,6 +28,22 @@ function getBadgeClassName(badge) {
     if (badge === "원격병행") return "blue";
     if (badge === "출석자율") return "gray";
     return "gray";
+}
+
+function getBadgeDescription(badge) {
+    const descriptionMap = {
+        MOOC: "기한 안에 자율적으로 수강하는 온라인 녹화 강의입니다.",
+        수강포기제한: "수강포기가 제한됩니다. 신청에 유의해주세요.",
+        교환학생:
+            "정규 정원 외 교환학생 TO가 배정됩니다. TO는 전체정정 시 모든 학생들에게 제공됩니다.",
+        유연학기: "일주일에 4차시를 수업하여, 반 학기 동안 진도를 모두 마칩니다.",
+        출석자율: "출석 운영 방식이 일반 과목과 다를 수 있습니다.",
+        녹강: "녹화 원격강의가 포함된 과목입니다.",
+        비대면: "실시간 원격수업 방식이 포함된 과목입니다.",
+        원격병행: "대면과 원격 또는 혼합 방식으로 운영될 수 있습니다."
+    };
+
+    return descriptionMap[badge] || `${badge} 표시가 있는 과목입니다.`;
 }
 
 function formatPeriods(periods = []) {
@@ -73,6 +92,91 @@ function getRoomText(course) {
     return "강의실 미정";
 }
 
+function getMapPlaceName(roomText) {
+    const firstRoom = String(roomText || "")
+        .split("/")
+        .map((item) => item.trim())
+        .find(Boolean);
+
+    if (!firstRoom || firstRoom === "강의실 미정") return "";
+
+    const normalizedRoom = firstRoom
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const buildingMatch = normalizedRoom.match(
+        /^[가-힣A-Za-z0-9()·-]*(?:과학관|교양관|도서관|기념관|박물관|체육관|생활관|연구관|연구동|강의동|실험동|본관|신관|별관|센터|회관|관|원|당|홀|빌딩)/
+    );
+
+    if (buildingMatch?.[0]) return buildingMatch[0].replace(/[()]/g, "");
+
+    return normalizedRoom.split(/\s+/)[0] || "";
+}
+
+function getMapUrl(roomText) {
+    const placeName = getMapPlaceName(roomText);
+
+    if (!placeName) return "";
+
+    const placeId = NAVER_PLACE_IDS_BY_BUILDING[placeName];
+
+    if (placeId) {
+        return `https://map.naver.com/p/entry/place/${placeId}?c=15.00,0,0,0,dh&placePath=/home`;
+    }
+
+    return `https://map.naver.com/p/search/${encodeURIComponent(
+        `고려대학교 ${placeName}`
+    )}?c=15.00,0,0,0,dh`;
+}
+
+function openMapPopup(mapUrl) {
+    const popupWidth = 1080;
+    const popupHeight = 760;
+    const screenLeft = window.screenLeft ?? window.screenX ?? 0;
+    const screenTop = window.screenTop ?? window.screenY ?? 0;
+    const viewportWidth = window.outerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.outerHeight || document.documentElement.clientHeight;
+    const left = Math.max(0, screenLeft + (viewportWidth - popupWidth) / 2);
+    const top = Math.max(0, screenTop + (viewportHeight - popupHeight) / 2);
+
+    const popup = window.open(
+        mapUrl,
+        "courseRoomNaverMap",
+        [
+            "popup=yes",
+            `width=${popupWidth}`,
+            `height=${popupHeight}`,
+            `left=${Math.round(left)}`,
+            `top=${Math.round(top)}`,
+            "resizable=yes",
+            "scrollbars=yes"
+        ].join(",")
+    );
+
+    popup?.focus();
+}
+
+function CourseTitle({ course }) {
+    if (!course.syllabusUrl) {
+        return <h3 title={course.title}>{course.title}</h3>;
+    }
+
+    return (
+        <h3 title={course.title}>
+            <a
+                className="course-title-link"
+                href={course.syllabusUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(event) => event.stopPropagation()}
+            >
+                {course.title}
+            </a>
+        </h3>
+    );
+}
+
 function CourseCard({
                         course,
                         liked,
@@ -82,13 +186,17 @@ function CourseCard({
                         registrationOpen = false,
                         quickIndex,
                         compact = false,
+                        isHovered = false,
+                        colorDot = null,
                         onToggleLike,
                         onToggleTimetable,
                         onEnrollCourse,
                         onCancelEnrollCourse,
                         onMouseEnter,
-                        onMouseLeave
+                        onMouseLeave,
+                        showTimetableAction = true
                     }) {
+    const [activeBadge, setActiveBadge] = useState(null);
     const isEnrolled = Boolean(enrolled);
     const isInTimetable = Boolean(inTimetable);
     const isRegistrationMode = Boolean(registrationOpen);
@@ -100,6 +208,29 @@ function CourseCard({
     const hashtags = course.hashtags || [];
     const scheduleText = getScheduleText(course);
     const roomText = getRoomText(course);
+    const mapUrl = getMapUrl(roomText);
+
+    const handleBadgeClick = (event, badge) => {
+        event.stopPropagation();
+
+        const rect = event.currentTarget.getBoundingClientRect();
+        const boundary = event.currentTarget.closest(
+            ".timetable-candidate-list, .course-list, .result-section"
+        );
+        const boundaryTop = boundary?.getBoundingClientRect().top ?? 0;
+        const hasRoomAbove = rect.top - boundaryTop > 96 && rect.top > 96;
+        const placement = hasRoomAbove ? "top" : "bottom";
+
+        let align = "center";
+        if (rect.left < 180) align = "left";
+        if (rect.right > window.innerWidth - 180) align = "right";
+
+        setActiveBadge((current) => {
+            if (current?.name === badge) return null;
+
+            return { name: badge, placement, align };
+        });
+    };
 
     /*
       상태 우선순위
@@ -171,27 +302,44 @@ function CourseCard({
         compact ? "compact" : "",
         isRegistrationMode ? "registration-mode" : "",
         isEnrolled ? "enrolled-card" : "",
-        blockReason ? "conflict" : ""
+        blockReason ? "conflict" : "",
+        disabled && !isEnrolled ? "enrollment-blocked" : "",
+        isHovered ? "card-highlighted" : ""
     ]
         .filter(Boolean)
         .join(" ");
 
     return (
         <article className={articleClassName} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+            {colorDot && (
+                <span className="course-color-dot card-pin" style={{ background: colorDot }} />
+            )}
             <div className="course-card-main">
                 <div className="course-title-line">
-                    <h3 title={course.title}>{course.title}</h3>
+                    <CourseTitle course={course} />
 
                     {badges.length > 0 && (
                         <div className="course-badges">
                             {badges.map((badge) => (
-                                <span
+                                <button
+                                    type="button"
                                     key={badge}
-                                    className={`compact-badge ${getBadgeClassName(badge)}`}
-                                    title={badge}
+                                    className={`compact-badge ${getBadgeClassName(badge)}${
+                                        activeBadge?.name === badge ? " is-selected" : ""
+                                    }`}
+                                    aria-expanded={activeBadge?.name === badge}
+                                    onClick={(event) => handleBadgeClick(event, badge)}
                                 >
-                  {getBadgeLabel(badge)}
-                </span>
+                                    <span>{getBadgeLabel(badge)}</span>
+                                    {activeBadge?.name === badge && (
+                                        <span
+                                            className={`badge-popover ${activeBadge.placement} align-${activeBadge.align}`}
+                                            role="status"
+                                        >
+                                            {getBadgeDescription(badge)}
+                                        </span>
+                                    )}
+                                </button>
                             ))}
                         </div>
                     )}
@@ -207,7 +355,23 @@ function CourseCard({
             👤 {course.professor || "미정"}
           </span>
                     <span title={scheduleText}>🕘 {scheduleText}</span>
-                    <span title={roomText}>🏫 {roomText}</span>
+                    <span title={roomText}>
+                        🏫{" "}
+                        {mapUrl ? (
+                            <button
+                                type="button"
+                                className="room-map-trigger"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    openMapPopup(mapUrl);
+                                }}
+                            >
+                                {roomText}
+                            </button>
+                        ) : (
+                            roomText
+                        )}
+                    </span>
                 </div>
 
                 {hashtags.length > 0 && (
@@ -248,15 +412,18 @@ function CourseCard({
                         {compact ? (liked ? "♥" : "♡") : `관심 ${liked ? "♥" : "♡"}`}
                     </button>
 
-                    <Button
-                        variant={getMainButtonVariant()}
-                        disabled={disabled}
-                        onClick={handleMainAction}
-                    >
-                        {getMainButtonText()}
-                    </Button>
+                    {showTimetableAction && (
+                        <Button
+                            variant={getMainButtonVariant()}
+                            disabled={disabled}
+                            onClick={handleMainAction}
+                        >
+                            {getMainButtonText()}
+                        </Button>
+                    )}
                 </div>
             )}
+
         </article>
     );
 }

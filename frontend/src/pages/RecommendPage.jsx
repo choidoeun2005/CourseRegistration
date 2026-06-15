@@ -146,6 +146,7 @@ function RecommendPage({
                                 onToggleLike={onToggleLike}
                                 onToggleTimetable={onToggleTimetable}
                                 onEnrollCourse={() => {}}
+                                showTimetableAction={false}
                             />
                         ))}
                     </div>

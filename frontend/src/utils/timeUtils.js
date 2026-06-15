@@ -66,41 +66,46 @@ export function hasCourseDuplicate(course, selectedCourses) {
     });
 }
 
-function sessionsConflict(sessionA, sessionB) {
-    if (sessionA.day !== sessionB.day) return false;
-
-    return sessionA.periods.some((period) =>
-        sessionB.periods.includes(period)
-    );
-}
-
-export function hasTimeConflict(course, selectedCourses) {
+export function hasTimeConflict(course, selectedCourses, maxAllowed = 3) {
     const courseSessions = getCourseSessions(course);
 
     // 시간 미정 과목은 교시 충돌 판단 불가 → 충돌 없음으로 처리
     if (courseSessions.length === 0) return false;
 
-    return selectedCourses.some((selected) => {
-        if (selected.id === course.id) return false;
+    for (const session of courseSessions) {
+        for (const period of session.periods) {
+            const overlapCount = selectedCourses.filter((selected) => {
+                if (selected.id === course.id) return false;
+                const selectedSessions = getCourseSessions(selected);
+                return selectedSessions.some(
+                    (s) => s.day === session.day && s.periods.includes(period)
+                );
+            }).length;
 
-        const selectedSessions = getCourseSessions(selected);
+            if (overlapCount >= maxAllowed) return true;
+        }
+    }
 
-        if (selectedSessions.length === 0) return false;
-
-        return courseSessions.some((courseSession) =>
-            selectedSessions.some((selectedSession) =>
-                sessionsConflict(courseSession, selectedSession)
-            )
-        );
-    });
+    return false;
 }
 
-export function getBlockReason(course, selectedCourses) {
+export function courseIncludesCell(course, day, period) {
+    const targetPeriod = Number(period);
+
+    return getCourseSessions(course).some(
+        (session) =>
+            session.day === day && session.periods.includes(targetPeriod)
+    );
+}
+
+export function getBlockReason(course, selectedCourses, options = {}) {
+    const { maxTimeOverlap = 3 } = options;
+
     if (hasCourseDuplicate(course, selectedCourses)) {
         return "과목 중복";
     }
 
-    if (hasTimeConflict(course, selectedCourses)) {
+    if (hasTimeConflict(course, selectedCourses, maxTimeOverlap)) {
         return "교시 중복";
     }
 

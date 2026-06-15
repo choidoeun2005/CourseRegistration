@@ -26,6 +26,8 @@ export function getAllCourses(query = {}) {
         keyword,
         college,
         department,
+        courseType,
+        courseDivisionCode,
         credit,
         includeDays,
         excludeDays
@@ -46,6 +48,18 @@ export function getAllCourses(query = {}) {
 
     if (department) {
         courses = courses.filter((course) => course.department === department);
+    }
+
+    if (courseType) {
+        courses = courses.filter(
+            (course) => (course.courseType || course.type) === courseType
+        );
+    }
+
+    if (courseDivisionCode) {
+        courses = courses.filter(
+            (course) => String(course.courseDivisionCode) === String(courseDivisionCode)
+        );
     }
 
     if (credit) {

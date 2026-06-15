@@ -1,8 +1,41 @@
 {
   "year": "2026",
   "term": "1R",
+  "syllabusTerm": "1R",
   "campus": "1",
   "gradCd": "0136",
-  "courseDiv": "00",
-  "language": "KOR"
+  "courseDivisions": [
+    { "code": "00", "label": "전공", "collectionMode": "department" },
+    { "code": "24", "label": "학문의기초", "collectionMode": "department" },
+    { "code": "01", "label": "교양", "collectionMode": "group" },
+    { "code": "30", "label": "교직", "collectionMode": "global" },
+    { "code": "41", "label": "군사학", "collectionMode": "global" },
+    { "code": "71", "label": "평생교육사", "collectionMode": "global" }
+  ],
+  "liberalArtsGroups": [
+    { "code": "24", "label": "1학년세미나" },
+    { "code": "23", "label": "ACADEMIC ENGLISH" },
+    { "code": "49", "label": "DS/AI" },
+    { "code": "48", "label": "GLOBAL ENGLISH" },
+    { "code": "16", "label": "과학과기술" },
+    { "code": "51", "label": "교양 선택" },
+    { "code": "50", "label": "교양 필수" },
+    { "code": "55", "label": "교양선택(기초과학)" },
+    { "code": "54", "label": "교양선택(외국어)" },
+    { "code": "10", "label": "군사학" },
+    { "code": "44", "label": "글쓰기" },
+    { "code": "18", "label": "디지털혁신과인간" },
+    { "code": "13", "label": "문학과예술" },
+    { "code": "15", "label": "사회의이해" },
+    { "code": "32", "label": "선택교양" },
+    { "code": "46", "label": "선택교양(기초과학)" },
+    { "code": "11", "label": "세계의문화" },
+    { "code": "12", "label": "역사의탐구" },
+    { "code": "14", "label": "윤리와사상" },
+    { "code": "17", "label": "정량적사고" },
+    { "code": "52", "label": "학문세계의탐구 I" },
+    { "code": "53", "label": "학문세계의탐구 II" }
+  ],
+  "language": "KOR",
+  "requestDelayMs": 800
 }

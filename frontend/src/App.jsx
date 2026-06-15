@@ -38,6 +38,23 @@ function App() {
     const [likedCourseIds, setLikedCourseIds] = useState([]);
     const [timetableCourseIds, setTimetableCourseIds] = useState([]);
     const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
+
+    const [activeTimetableTab, setActiveTimetableTab] = useState(() => {
+        return Number(localStorage.getItem("activeTimetableTab")) || 1;
+    });
+    const [localTimetableTabs, setLocalTimetableTabs] = useState(() => {
+        try {
+            return (
+                JSON.parse(localStorage.getItem("localTimetableTabs")) || {
+                    2: [],
+                    3: [],
+                    4: []
+                }
+            );
+        } catch {
+            return { 2: [], 3: [], 4: [] };
+        }
+    });
     const [quickEnroll, setQuickEnroll] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
     const [registrationOpen, setRegistrationOpen] = useState(false);
@@ -129,7 +146,36 @@ function App() {
         }
     };
 
+    const handleSwitchTimetableTab = (tab) => {
+        setActiveTimetableTab(tab);
+        localStorage.setItem("activeTimetableTab", String(tab));
+    };
+
+    const activeTimetableCourseIds =
+        activeTimetableTab === 1
+            ? timetableCourseIds
+            : localTimetableTabs[activeTimetableTab] || [];
+
     const toggleTimetable = async (courseId) => {
+        if (activeTimetableTab !== 1) {
+            const tab = activeTimetableTab;
+            const current = localTimetableTabs[tab] || [];
+            const numId = Number(courseId);
+            const isIn = current.map(Number).includes(numId);
+            const next = isIn
+                ? current.filter((id) => Number(id) !== numId)
+                : [...current, numId];
+            const nextTabs = { ...localTimetableTabs, [tab]: next };
+            setLocalTimetableTabs(nextTabs);
+            localStorage.setItem("localTimetableTabs", JSON.stringify(nextTabs));
+            showToast(
+                `${getCourseTitle(courseId)} 강의를 시간표 ${tab}에${
+                    isIn ? "서 제거" : " 추가"
+                }하였습니다.`
+            );
+            return;
+        }
+
         try {
             const isAlreadyInTimetable = timetableCourseIds
                 .map(Number)
@@ -247,6 +293,11 @@ function App() {
             setLikedCourseIds(result.likedCourseIds || []);
             setTimetableCourseIds(result.timetableCourseIds || []);
             setEnrolledCourseIds(result.enrolledCourseIds || []);
+            const emptyTabs = { 2: [], 3: [], 4: [] };
+            setLocalTimetableTabs(emptyTabs);
+            localStorage.setItem("localTimetableTabs", JSON.stringify(emptyTabs));
+            setActiveTimetableTab(1);
+            localStorage.setItem("activeTimetableTab", "1");
         } catch (error) {
             alert(error.message || "초기화에 실패했습니다.");
         }
@@ -299,9 +350,11 @@ function App() {
                             isLoggedIn ? (
                                 <CourseListPage
                                     likedCourseIds={likedCourseIds}
-                                    timetableCourseIds={timetableCourseIds}
+                                    timetableCourseIds={activeTimetableCourseIds}
                                     enrolledCourseIds={enrolledCourseIds}
                                     registrationOpen={registrationOpen}
+                                    activeTimetableTab={activeTimetableTab}
+                                    onSwitchTimetableTab={handleSwitchTimetableTab}
                                     onToggleLike={toggleLike}
                                     onToggleTimetable={toggleTimetable}
                                     onEnrollCourse={enrollCourse}

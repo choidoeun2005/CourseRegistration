@@ -31,6 +31,8 @@ export function createDefaultFilters() {
 
         credit: "",
         courseType: "",
+        courseTypes: [],
+        generalArea: "",
 
         onlyAvailable: false,
         excludeDropRestricted: false,
@@ -99,13 +101,237 @@ export function getCreditOptions(courses) {
 }
 
 export function getCourseTypeOptions(courses) {
-    return [
+    const priority = [
+        "전공필수",
+        "전공선택",
+        "학문의기초",
+        "교양",
+        "학부공통",
+        "교직",
+        "평생교육사",
+        "군사학"
+    ];
+
+    const options = [
         ...new Set(
             courses
                 .map((course) => course.courseType || course.type)
                 .filter(Boolean)
         )
-    ].sort((a, b) => a.localeCompare(b, "ko"));
+    ];
+
+    return options.sort((a, b) => {
+        const aIndex = priority.indexOf(a);
+        const bIndex = priority.indexOf(b);
+
+        if (aIndex !== -1 || bIndex !== -1) {
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+        }
+
+        return a.localeCompare(b, "ko");
+    });
+}
+
+function getSelectedCourseTypes(filters = {}) {
+    if (Array.isArray(filters.courseTypes)) {
+        return filters.courseTypes.filter(Boolean);
+    }
+
+    return filters.courseType ? [filters.courseType] : [];
+}
+
+const GENERAL_AREA_RULES = [
+    {
+        label: "언어/글쓰기",
+        keywords: [
+            "글쓰기",
+            "english",
+            "영어",
+            "언어",
+            "외국어",
+            "일본어",
+            "중국어",
+            "스페인어",
+            "프랑스어",
+            "독일어",
+            "말하기",
+            "토론",
+            "작문",
+            "커뮤니케이션"
+        ]
+    },
+    {
+        label: "문학/예술",
+        keywords: [
+            "문학",
+            "예술",
+            "미술",
+            "음악",
+            "영화",
+            "연극",
+            "디자인",
+            "사진",
+            "창작",
+            "시",
+            "소설",
+            "공연"
+        ]
+    },
+    {
+        label: "역사/문화",
+        keywords: [
+            "역사",
+            "문화",
+            "세계",
+            "한국사",
+            "동아시아",
+            "서양",
+            "문명",
+            "고전",
+            "전통"
+        ]
+    },
+    {
+        label: "사회/경제",
+        keywords: [
+            "사회",
+            "경제",
+            "경영",
+            "정치",
+            "법",
+            "행정",
+            "미디어",
+            "심리",
+            "교육",
+            "젠더",
+            "환경",
+            "국제"
+        ]
+    },
+    {
+        label: "과학/기술",
+        keywords: [
+            "과학",
+            "기술",
+            "물리",
+            "화학",
+            "생명",
+            "수학",
+            "통계",
+            "공학",
+            "기초과학",
+            "우주",
+            "에너지"
+        ]
+    },
+    {
+        label: "디지털/AI",
+        keywords: [
+            "디지털",
+            "ai",
+            "인공지능",
+            "데이터",
+            "컴퓨터",
+            "소프트웨어",
+            "코딩",
+            "프로그래밍",
+            "알고리즘",
+            "정보",
+            "혁신"
+        ]
+    },
+    {
+        label: "윤리/철학",
+        keywords: [
+            "윤리",
+            "철학",
+            "사상",
+            "인문",
+            "종교",
+            "인권",
+            "가치",
+            "논리",
+            "삶"
+        ]
+    },
+    {
+        label: "진로/창업",
+        keywords: [
+            "진로",
+            "창업",
+            "세미나",
+            "리더십",
+            "취업",
+            "직업",
+            "캡스톤",
+            "기업가"
+        ]
+    },
+    {
+        label: "체육/건강",
+        keywords: [
+            "체육",
+            "스포츠",
+            "운동",
+            "건강",
+            "요가",
+            "댄스",
+            "피트니스",
+            "웰니스"
+        ]
+    }
+];
+
+function isGeneralEducation(course) {
+    return (course.courseType || course.type) === "교양";
+}
+
+function getGeneralAreaSearchText(course) {
+    return [
+        course.title,
+        course.name,
+        course.groupName,
+        course.department,
+        course.college,
+        course.description,
+        course.summary,
+        course.syllabusText,
+        course.detailText,
+        course.objective,
+        course.overview,
+        course.instruction?.classType,
+        ...(course.hashtags || []),
+        ...(course.tags || [])
+    ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+}
+
+export function getGeneralEducationArea(course) {
+    if (!isGeneralEducation(course)) return "";
+
+    const text = getGeneralAreaSearchText(course);
+    const matchedRule = GENERAL_AREA_RULES.find((rule) =>
+        rule.keywords.some((keyword) => text.includes(keyword.toLowerCase()))
+    );
+
+    return matchedRule?.label || "기타 교양";
+}
+
+export function getGeneralEducationAreaOptions(courses) {
+    const availableAreas = new Set(
+        courses
+            .filter(isGeneralEducation)
+            .map(getGeneralEducationArea)
+            .filter(Boolean)
+    );
+
+    return GENERAL_AREA_RULES.map((rule) => rule.label)
+        .filter((area) => availableAreas.has(area))
+        .concat(availableAreas.has("기타 교양") ? ["기타 교양"] : []);
 }
 
 function normalizeText(value) {
@@ -118,7 +344,13 @@ function getSearchFields(course) {
     return {
         title: [course.title],
         professor: [course.professor],
-        code: [course.code, course.section, `${course.code}-${course.section}`]
+        code: [course.code, course.section, `${course.code}-${course.section}`],
+        courseType: [
+            course.courseType,
+            course.type,
+            course.courseDivisionCode,
+            course.groupName
+        ]
     };
 }
 
@@ -147,11 +379,20 @@ function matchesKeyword(course, keyword, searchTarget) {
         );
     }
 
+    if (searchTarget === "courseType") {
+        return fields.courseType.some((value) =>
+            normalizeText(value).includes(normalizedKeyword)
+        );
+    }
+
     // 전체 검색도 대학/학과는 제외.
-    // 전체 = 과목명 + 교수자 + 학수번호
-    return [...fields.title, ...fields.professor, ...fields.code].some((value) =>
-        normalizeText(value).includes(normalizedKeyword)
-    );
+    // 전체 = 과목명 + 교수자 + 학수번호 + 이수구분
+    return [
+        ...fields.title,
+        ...fields.professor,
+        ...fields.code,
+        ...fields.courseType
+    ].some((value) => normalizeText(value).includes(normalizedKeyword));
 }
 
 function getCourseDays(course) {
@@ -263,7 +504,17 @@ export function applyCourseFilters(courses, filters, options = {}) {
         );
     }
 
-    if (filters.department?.enabled && filters.department.value) {
+    if (
+        getSelectedCourseTypes(filters).includes("교양") &&
+        filters.department?.enabled &&
+        filters.generalArea
+    ) {
+        result = result.filter(
+            (course) =>
+                !isGeneralEducation(course) ||
+                getGeneralEducationArea(course) === filters.generalArea
+        );
+    } else if (filters.department?.enabled && filters.department.value) {
         result = result.filter(
             (course) => course.department === filters.department.value
         );
@@ -283,9 +534,11 @@ export function applyCourseFilters(courses, filters, options = {}) {
         );
     }
 
-    if (filters.courseType) {
+    const selectedCourseTypes = getSelectedCourseTypes(filters);
+
+    if (selectedCourseTypes.length > 0) {
         result = result.filter(
-            (course) => (course.courseType || course.type) === filters.courseType
+            (course) => selectedCourseTypes.includes(course.courseType || course.type)
         );
     }
 

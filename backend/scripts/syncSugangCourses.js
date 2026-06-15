@@ -22,7 +22,38 @@ const DEFAULT_CONFIG = {
     syllabusTerm: "1R",
     campus: "1",
     gradCd: "0136",
-    courseDiv: "00",
+    courseDivisions: [
+        { code: "00", label: "전공", collectionMode: "department" },
+        { code: "24", label: "학문의기초", collectionMode: "department" },
+        { code: "01", label: "교양", collectionMode: "group" },
+        { code: "30", label: "교직", collectionMode: "global" },
+        { code: "41", label: "군사학", collectionMode: "global" },
+        { code: "71", label: "평생교육사", collectionMode: "global" }
+    ],
+    liberalArtsGroups: [
+        { code: "24", label: "1학년세미나" },
+        { code: "23", label: "ACADEMIC ENGLISH" },
+        { code: "49", label: "DS/AI" },
+        { code: "48", label: "GLOBAL ENGLISH" },
+        { code: "16", label: "과학과기술" },
+        { code: "51", label: "교양 선택" },
+        { code: "50", label: "교양 필수" },
+        { code: "55", label: "교양선택(기초과학)" },
+        { code: "54", label: "교양선택(외국어)" },
+        { code: "10", label: "군사학" },
+        { code: "44", label: "글쓰기" },
+        { code: "18", label: "디지털혁신과인간" },
+        { code: "13", label: "문학과예술" },
+        { code: "15", label: "사회의이해" },
+        { code: "32", label: "선택교양" },
+        { code: "46", label: "선택교양(기초과학)" },
+        { code: "11", label: "세계의문화" },
+        { code: "12", label: "역사의탐구" },
+        { code: "14", label: "윤리와사상" },
+        { code: "17", label: "정량적사고" },
+        { code: "52", label: "학문세계의탐구 I" },
+        { code: "53", label: "학문세계의탐구 II" }
+    ],
     language: "KOR",
     requestDelayMs: 800
 };
@@ -47,9 +78,16 @@ const SYLLABUS_TERM =
 
 const CAMPUS = sugangConfig.campus || "1";
 const GRAD_CD = sugangConfig.gradCd || "0136";
-const COURSE_DIV = sugangConfig.courseDiv || "00";
 const LANGUAGE = sugangConfig.language || "KOR";
 const REQUEST_DELAY_MS = Number(sugangConfig.requestDelayMs || 800);
+const COURSE_DIVISIONS =
+    Array.isArray(sugangConfig.courseDivisions) && sugangConfig.courseDivisions.length > 0
+        ? sugangConfig.courseDivisions
+        : DEFAULT_CONFIG.courseDivisions;
+const LIBERAL_ARTS_GROUPS =
+    Array.isArray(sugangConfig.liberalArtsGroups) && sugangConfig.liberalArtsGroups.length > 0
+        ? sugangConfig.liberalArtsGroups
+        : DEFAULT_CONFIG.liberalArtsGroups;
 
 // Chrome Network Payload에서 보이던 값.
 // 요청 실패 시 실제 Payload의 strUserType 값으로 바꾸면 됨.
@@ -85,16 +123,18 @@ function buildSugangUrl() {
     return `https://sugang.korea.ac.kr/view?attribute=lectHakbuData&fake=${Date.now()}`;
 }
 
-function buildPayload(department) {
-    return new URLSearchParams({
+function buildPayload(target) {
+    const params = {
         pYear: SUGANG_YEAR,
         pTerm: SUGANG_TERM,
         pCampus: CAMPUS,
         pGradCd: GRAD_CD,
-        pCourDiv: COURSE_DIV,
+        pCourDiv: target.courseDivisionCode,
 
-        pCol: department.pCol,
-        pDept: department.pDept,
+        pCol: target.pCol || "",
+        pDept: target.pDept || "",
+        pGroupCd: target.pGroupCd || "",
+        pgroupcd: target.pGroupCd || "",
 
         pCredit: "",
         pDay: "",
@@ -107,12 +147,60 @@ function buildPayload(department) {
         strYear: SUGANG_YEAR,
         strTerm: SUGANG_TERM,
         strUserType: STR_USER_TYPE
+    };
+
+    return new URLSearchParams(params);
+}
+
+function buildCollectionTargets(departments) {
+    return COURSE_DIVISIONS.flatMap((division) => {
+        const courseDivisionCode = division.code;
+        const courseDivisionLabel = division.label;
+        const collectionMode = division.collectionMode || "global";
+
+        if (collectionMode === "department") {
+            return departments.map((department) => ({
+                ...department,
+                courseDivisionCode,
+                courseDivisionLabel,
+                collectionMode,
+                displayName: `${courseDivisionLabel}: ${department.collegeName} / ${department.departmentName}`
+            }));
+        }
+
+        if (collectionMode === "group") {
+            return LIBERAL_ARTS_GROUPS.map((group) => ({
+                collegeName: courseDivisionLabel,
+                pCol: "",
+                departmentName: group.label,
+                pDept: "",
+                pGroupCd: group.code,
+                groupLabel: group.label,
+                courseDivisionCode,
+                courseDivisionLabel,
+                collectionMode,
+                displayName: `${courseDivisionLabel}: ${group.label}`
+            }));
+        }
+
+        return [
+            {
+                collegeName: courseDivisionLabel,
+                pCol: "",
+                departmentName: "전체",
+                pDept: "",
+                courseDivisionCode,
+                courseDivisionLabel,
+                collectionMode,
+                displayName: `${courseDivisionLabel}: 전체`
+            }
+        ];
     });
 }
 
-async function fetchDepartmentCourses(department) {
+async function fetchTargetCourses(target) {
     const url = buildSugangUrl();
-    const payload = buildPayload(department);
+    const payload = buildPayload(target);
 
     const response = await axios.post(url, payload.toString(), {
         responseType: "text",
@@ -608,7 +696,7 @@ function buildHashtags({ instruction, features }) {
     );
 }
 
-function normalizeObjectRow(raw, department, index) {
+function normalizeObjectRow(raw, department, index, target = {}) {
     const year = String(raw.year || SUGANG_YEAR);
     const term = String(raw.term || SUGANG_TERM);
 
@@ -616,8 +704,8 @@ function normalizeObjectRow(raw, department, index) {
     const section = padSection(raw.cour_cls);
 
     const title = String(raw.cour_nm || "");
-    const courseType = String(raw.isu_nm || "");
-    const courseDivisionCode = String(raw.cour_div || "");
+    const courseType = String(raw.isu_nm || target.courseDivisionLabel || "");
+    const courseDivisionCode = String(raw.cour_div || target.courseDivisionCode || "");
 
     const credit = Number(raw.credit || 0);
     const professor = String(raw.prof_nm || "");
@@ -657,6 +745,8 @@ function normalizeObjectRow(raw, department, index) {
 
         department: raw.department || department.departmentName,
         departmentCode: raw.dept_cd || department.pDept,
+        groupCode: target.pGroupCd || "",
+        groupName: target.groupLabel || "",
 
         professor,
 
@@ -695,6 +785,8 @@ function normalizeObjectRow(raw, department, index) {
             rawDepartmentCode: raw.dept_cd || "",
             rawCollegeCode: raw.col_cd || "",
             rawCourseDivisionCode: raw.cour_div || "",
+            collectionMode: target.collectionMode || "",
+            collectionLabel: target.displayName || "",
             raw
         }
     };
@@ -702,7 +794,7 @@ function normalizeObjectRow(raw, department, index) {
     return course;
 }
 
-function normalizeArrayRow(row, department, index) {
+function normalizeArrayRow(row, department, index, target = {}) {
     // 응답이 HTML table로 오는 경우를 위한 fallback.
     // 실제 고려대 API는 보통 object row라 이 경로는 거의 안 타는 게 정상.
     const guessed = {
@@ -721,7 +813,7 @@ function normalizeArrayRow(row, department, index) {
     const code = String(guessed.code || "");
     const section = padSection(guessed.section);
     const title = String(guessed.title || "");
-    const courseType = String(guessed.courseType || "");
+    const courseType = String(guessed.courseType || target.courseDivisionLabel || "");
     const credit = parseCredit(guessed.credit);
     const professor = String(guessed.professor || "");
 
@@ -776,13 +868,15 @@ function normalizeArrayRow(row, department, index) {
         title,
         courseType,
         type: courseType,
-        courseDivisionCode: "",
+        courseDivisionCode: target.courseDivisionCode || "",
         credit,
 
         college: department.collegeName,
         collegeCode: department.pCol,
         department: department.departmentName,
         departmentCode: department.pDept,
+        groupCode: target.pGroupCd || "",
+        groupName: target.groupLabel || "",
 
         professor,
 
@@ -790,8 +884,10 @@ function normalizeArrayRow(row, department, index) {
 
         timeText: schedule.timeText,
         room: schedule.rooms.join(" / "),
-        days: schedule.days,
-        periods: schedule.periods,
+        days: Object.keys(schedule.byDay),
+        periods: [
+            ...new Set(schedule.sessions.flatMap((session) => session.periods))
+        ].sort((a, b) => a - b),
 
         instruction,
         features,
@@ -812,17 +908,19 @@ function normalizeArrayRow(row, department, index) {
         source: {
             params: `${code}@${section}`,
             rowid: null,
+            collectionMode: target.collectionMode || "",
+            collectionLabel: target.displayName || "",
             raw: row
         }
     };
 }
 
-function normalizeCourse(raw, department, index) {
+function normalizeCourse(raw, department, index, target = {}) {
     if (Array.isArray(raw)) {
-        return normalizeArrayRow(raw, department, index);
+        return normalizeArrayRow(raw, department, index, target);
     }
 
-    return normalizeObjectRow(raw, department, index);
+    return normalizeObjectRow(raw, department, index, target);
 }
 
 function isValidCourse(course) {
@@ -925,41 +1023,43 @@ async function main() {
     console.log("강의계획안 학기:", SYLLABUS_TERM);
     console.log("캠퍼스:", CAMPUS);
     console.log("학부/대학원 코드:", GRAD_CD);
-    console.log("과목구분:", COURSE_DIV);
+    const targets = buildCollectionTargets(departments);
+
+    console.log(
+        "과목구분:",
+        COURSE_DIVISIONS.map((division) => `${division.label}(${division.code})`).join(", ")
+    );
     console.log(`수집 대상 학과 수: ${departments.length}`);
+    console.log(`수집 요청 타깃 수: ${targets.length}`);
     console.log("");
 
     const allRawRows = [];
     const allCourses = [];
 
-    for (const department of departments) {
-        console.log(
-            `과목 수집 중: ${department.collegeName} / ${department.departmentName}`
-        );
+    for (const target of targets) {
+        console.log(`과목 수집 중: ${target.displayName}`);
 
         try {
-            const rawText = await fetchDepartmentCourses(department);
+            const rawText = await fetchTargetCourses(target);
             const rows = extractRows(rawText);
 
             console.log(`  응답 row 수: ${rows.length}`);
 
             allRawRows.push({
-                department,
+                target,
                 rowCount: rows.length,
                 rows
             });
 
             for (const row of rows) {
-                const course = normalizeCourse(row, department, allCourses.length);
+                const course = normalizeCourse(row, target, allCourses.length, target);
 
                 if (isValidCourse(course)) {
                     allCourses.push(course);
                 }
             }
         } catch (error) {
-            console.error(
-                `  실패: ${department.collegeName} / ${department.departmentName}`
-            );
+            console.error(`  실패: ${target.displayName}`);
 
             if (error.response) {
                 console.error("  status:", error.response.status);
@@ -969,7 +1069,7 @@ async function main() {
             }
 
             allRawRows.push({
-                department,
+                target,
                 rowCount: 0,
                 error: error.message,
                 rows: []

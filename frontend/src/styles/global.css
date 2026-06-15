@@ -366,41 +366,6 @@ body.dark .chat-answer {
     padding: 18px;
 }
 
-.timetable {
-    width: 430px;
-    display: grid;
-    grid-template-columns: 56px repeat(6, 1fr);
-    border-top: 1px solid #ddd;
-    border-left: 1px solid #ddd;
-    align-self: flex-start;
-}
-
-.row-fragment {
-    display: contents;
-}
-
-.time-cell,
-.day-head,
-.table-cell {
-    min-height: 58px;
-    border-right: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
-    padding: 6px;
-    font-size: 12px;
-}
-
-.day-head {
-    min-height: 36px;
-    text-align: center;
-    font-weight: 800;
-    background: #f7f7f7;
-}
-
-.time-cell {
-    background: #fafafa;
-    color: #777;
-}
-
 .page-title {
     text-align: center;
     color: #9b0000;
@@ -782,6 +747,24 @@ body.dark .recommend-panel {
     width: 100%;
 }
 
+.room-map-trigger {
+    border: 0;
+    appearance: none;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.room-map-trigger:hover,
+.room-map-trigger:focus-visible {
+    color: inherit;
+    text-decoration: none;
+}
+
 body.dark .course-card {
     background: #2a2a2a;
     border-color: #444;
@@ -813,6 +796,8 @@ body.dark .hashtag {
 }
 
 .compact-badge {
+    position: relative;
+    border: 0;
     color: white;
     padding: 6px 9px;
     font-size: 13px;
@@ -820,6 +805,110 @@ body.dark .hashtag {
     line-height: 1;
     white-space: nowrap;
     border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    overflow: visible;
+    z-index: 1;
+}
+
+.compact-badge:focus-visible {
+    outline: 2px solid #111827;
+    outline-offset: 2px;
+}
+
+.compact-badge.is-selected {
+    z-index: 60;
+}
+
+.badge-popover {
+    position: absolute;
+    z-index: 1000;
+    width: max-content;
+    min-width: 180px;
+    max-width: min(280px, calc(100vw - 32px));
+    padding: 10px 12px;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 8px;
+    background: #111827;
+    color: white;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.45;
+    text-align: left;
+    white-space: normal;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    pointer-events: none;
+}
+
+.badge-popover::after {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: #111827;
+    content: "";
+}
+
+.badge-popover.top {
+    bottom: calc(100% + 10px);
+}
+
+.badge-popover.bottom {
+    top: calc(100% + 10px);
+}
+
+.badge-popover.align-center {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.badge-popover.align-left {
+    left: 0;
+}
+
+.badge-popover.align-right {
+    right: 0;
+}
+
+.badge-popover.top::after {
+    bottom: -5px;
+}
+
+.badge-popover.bottom::after {
+    top: -5px;
+}
+
+.badge-popover.align-center::after {
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.badge-popover.align-left::after {
+    left: 18px;
+    transform: rotate(45deg);
+}
+
+.badge-popover.align-right::after {
+    right: 18px;
+    transform: rotate(45deg);
+}
+
+.course-title-link,
+.tt-course-title-link,
+.untimed-course-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.course-title-link:hover,
+.course-title-link:focus-visible,
+.tt-course-title-link:hover,
+.tt-course-title-link:focus-visible,
+.untimed-course-title-link:hover,
+.untimed-course-title-link:focus-visible {
+    color: inherit;
+    text-decoration: none;
 }
 
 .compact-badge.red {
@@ -840,58 +929,6 @@ body.dark .hashtag {
 
 .compact-badge.gray {
     background: #777;
-}
-
-.timetable-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.timetable-summary {
-    background: white;
-    border: 1px solid #ddd;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    font-weight: 800;
-}
-
-.timetable-summary span {
-    color: #666;
-    font-size: 14px;
-}
-
-.untimed-course-box {
-    background: white;
-    border: 1px solid #ddd;
-    padding: 16px;
-}
-
-.untimed-title {
-    font-weight: 900;
-    margin-bottom: 10px;
-}
-
-.untimed-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.untimed-item {
-    border: 1px dashed #bbb;
-    padding: 10px 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    font-size: 14px;
-}
-
-.untimed-item strong {
-    font-size: 15px;
 }
 
 .course-badges {
@@ -924,176 +961,10 @@ body.dark .hashtag {
     font-size: 14px;
 }
 
-.timetable {
-    display: grid;
-    grid-template-columns: 56px repeat(6, minmax(72px, 1fr));
-    grid-auto-rows: 58px;
-    border: 1px solid #ddd;
-    background: white;
-    overflow: hidden;
-}
-
-.row-fragment {
-    display: contents;
-}
-
-.day-head,
-.time-cell,
-.table-cell {
-    border-right: 1px solid #e1e1e1;
-    border-bottom: 1px solid #e1e1e1;
-}
-
-.day-head {
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    background: #f7f7f7;
-}
-
-.time-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #666;
-    background: #fafafa;
-    font-weight: 800;
-}
-
-.time-cell.empty {
-    background: #f7f7f7;
-}
-
-.table-cell {
-    min-width: 0;
-    padding: 4px;
-    position: relative;
-    overflow: hidden;
-}
-
-.table-cell.course-start,
-.table-cell.course-continue {
-    background: #eaf3ff;
-}
-
-.table-cell.course-continue {
-    border-top-color: transparent;
-}
-
-.table-course {
-    height: 100%;
-    border-left: 4px solid #4d92cc;
-    background: #dcecff;
-    padding: 6px 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.table-course strong {
-    display: block;
-    width: 100%;
-    font-size: 12px;
-    line-height: 1.2;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.table-course span {
-    display: none;
-}
-
-.table-course-continued {
-    height: 100%;
-    border-left: 4px solid #4d92cc;
-    background: #dcecff;
-}
-
-.untimed-course-box {
-    background: white;
-    border: 1px solid #ddd;
-    padding: 14px;
-}
-
-.untimed-title {
-    font-weight: 900;
-    margin-bottom: 10px;
-}
-
-.untimed-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.untimed-item {
-    border: 1px dashed #bbb;
-    padding: 10px 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    font-size: 14px;
-}
-
-.untimed-item strong {
-    font-size: 15px;
-}
-
-body.dark .timetable,
-body.dark .timetable-summary,
-body.dark .untimed-course-box {
-    background: #2a2a2a;
-    border-color: #444;
-}
-
-body.dark .day-head,
-body.dark .time-cell {
-    background: #333;
-    color: #ddd;
-}
-
-body.dark .table-cell.course-start,
-body.dark .table-cell.course-continue {
-    background: #243447;
-}
-
-body.dark .table-course,
-body.dark .table-course-continued {
-    background: #2e4a68;
-}
-
-.timetable-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.timetable-summary {
-    background: white;
-    border: 1px solid #ddd;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    font-weight: 800;
-}
-
-.timetable-summary span {
-    color: #666;
-    font-size: 14px;
-}
-
 .timetable-grid {
     display: grid;
     grid-template-columns: 60px repeat(6, minmax(84px, 1fr));
-    grid-template-rows: 42px repeat(9, 64px);
+    grid-template-rows: var(--tt-grid-template-rows, 42px repeat(9, 64px));
     position: relative;
     background: white;
     border: 1px solid #ddd;
@@ -1135,6 +1006,14 @@ body.dark .table-course-continued {
     background: white;
 }
 
+.tt-bg-cell-clickable {
+    cursor: pointer;
+}
+
+.tt-bg-cell-clickable:hover {
+    background: #fef9c3;
+}
+
 .tt-course-block {
     margin: 3px;
     border-left: 4px solid #4d92cc;
@@ -1142,23 +1021,29 @@ body.dark .table-course-continued {
     box-sizing: border-box;
     overflow: hidden;
     z-index: 2;
+    position: relative;
 
-    display: flex;
-    align-items: stretch;
-    justify-content: stretch;
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    padding: 6px 9px 6px 7px;
     min-height: 0;
 }
 
 .tt-course-title-wrap {
     width: 100%;
     height: 100%;
-    padding: 6px 7px;
+    padding: 0;
     box-sizing: border-box;
 
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 0;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
 }
 
 .tt-course-title {
@@ -1173,42 +1058,11 @@ body.dark .table-course-continued {
     word-break: keep-all;
     overflow-wrap: break-word;
 
-    text-align: center;
+    text-align: left;
     font-size: 30px;
     line-height: 1.25;
     font-weight: 800;
     color: #1f2d3d;
-}
-
-.untimed-course-box {
-    background: white;
-    border: 1px solid #ddd;
-    padding: 14px;
-}
-
-.untimed-title {
-    font-weight: 900;
-    margin-bottom: 10px;
-}
-
-.untimed-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.untimed-item {
-    border: 1px dashed #bbb;
-    padding: 10px 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    font-size: 14px;
-}
-
-.untimed-item strong {
-    font-size: 15px;
 }
 
 body.dark .timetable-summary,
@@ -1704,7 +1558,7 @@ body.timetable-wide .timetable-split {
     gap: 5px;
     flex-wrap: nowrap;
     max-width: 40%;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .course-card.compact:not(.registration-mode) .compact-badge {
@@ -1778,7 +1632,7 @@ body.timetable-wide .timetable-split {
 .timetable-grid {
     min-width: 760px;
     grid-template-columns: 56px repeat(6, minmax(100px, 1fr));
-    grid-template-rows: 38px repeat(9, 56px);
+    grid-template-rows: var(--tt-grid-template-rows, 38px repeat(9, 56px));
 }
 
 /* 조금 더 압축된 시간표 */
@@ -2006,6 +1860,7 @@ body.timetable-wide .timetable-fixed-panel .timetable-section {
 body.timetable-wide .timetable-grid {
     min-width: 760px;
     min-height: max-content;
+    height: auto !important;
     overflow: visible !important;
 }
 
@@ -2107,18 +1962,6 @@ body.timetable-wide .page-container {
     overflow: visible !important;
 
     display: block !important;
-}
-
-/* grid-scroll이 스크롤을 가로채지 않게 */
-.timetable-view-shell .timetable-fixed-panel .timetable-grid-scroll {
-    height: auto !important;
-    max-height: none !important;
-    min-height: auto !important;
-
-    overflow: visible !important;
-
-    display: block !important;
-    flex: none !important;
 }
 
 /* 시간표 grid 자체는 자연스럽게 커짐 */
@@ -2963,7 +2806,7 @@ body.timetable-wide .page-container {
     flex-wrap: nowrap !important;
 
     max-width: 38% !important;
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 /* 리스트뷰 뱃지 크기 */
@@ -3012,6 +2855,35 @@ body.timetable-wide .page-container {
     background: #fff4ef;
     color: #222;
     box-shadow: inset 0 0 0 1px #e4572e;
+}
+
+.view-controls .availability-toggle {
+    height: 38px;
+    border: 1px solid #d8d8d8;
+    border-radius: 10px;
+    background: #f8f8f8;
+    color: #333;
+    padding: 0 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+    transition:
+            background 0.12s ease,
+            border-color 0.12s ease,
+            color 0.12s ease,
+            box-shadow 0.12s ease;
+}
+
+.view-controls .availability-toggle:hover {
+    background: white;
+}
+
+.view-controls .availability-toggle.active {
+    background: #fff1ea;
+    border-color: #e4572e;
+    color: #222;
+    box-shadow: 0 1px 2px rgba(228, 87, 46, 0.12);
 }
 
 /* =========================================================
@@ -3084,7 +2956,8 @@ body.timetable-wide .page-container {
 }
 
 .sort-chip:hover,
-.view-mode-group button:hover {
+.view-mode-group button:hover,
+.view-controls .availability-toggle:hover {
     background: white;
 }
 
@@ -3094,6 +2967,10 @@ body.timetable-wide .page-container {
     border-color: #e4572e;
     color: #222;
     box-shadow: 0 1px 2px rgba(228, 87, 46, 0.12);
+}
+
+.view-controls .availability-toggle.active:hover {
+    background: #fff1ea;
 }
 
 .sort-chip-group {
@@ -3109,6 +2986,7 @@ body.timetable-wide .page-container {
         align-items: flex-start;
         flex-direction: column;
         padding: 16px;
+        gap: 14px;
     }
 
     .view-controls {
@@ -3211,6 +3089,207 @@ body.timetable-wide .filter-panel {
     margin-right: auto !important;
 
     box-sizing: border-box !important;
+}
+
+/* =========================================================
+   FilterPanel comfort spacing
+========================================================= */
+
+.filter-panel {
+    padding: 20px 22px !important;
+}
+
+.filter-panel .search-filter-row {
+    grid-template-columns: minmax(420px, 1fr) auto auto !important;
+    gap: 14px !important;
+    margin-bottom: 20px !important;
+}
+
+.main-search-input {
+    height: 48px;
+    font-size: 16px;
+    padding: 0 16px;
+}
+
+.main-search-button {
+    height: 48px;
+    border: 1px solid #222;
+    background: #222;
+    color: white;
+    padding: 0 22px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.main-search-button:hover {
+    background: #111;
+}
+
+.search-target-chips {
+    gap: 8px;
+    flex-wrap: wrap;
+    white-space: normal;
+}
+
+.search-target-chip {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+.filter-panel .filter-main-row {
+    gap: 18px 30px !important;
+    margin-bottom: 4px !important;
+}
+
+.filter-field,
+.day-filter-group {
+    gap: 12px;
+}
+
+.filter-field span,
+.day-filter-group > span,
+.filter-inline-chip-group > span {
+    font-size: 15px;
+    font-weight: 900;
+    color: #555;
+}
+
+.filter-inline-chip-group {
+    display: inline-grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    min-width: min(100%, 460px);
+}
+
+.filter-inline-chip-group .detail-chip-row {
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-field select,
+.filter-field input {
+    height: 44px;
+    min-width: 190px;
+    font-size: 15px;
+    padding: 0 12px;
+}
+
+.filter-apply-toggle {
+    height: 36px;
+    padding: 0 11px;
+    font-size: 13px;
+}
+
+.day-buttons {
+    gap: 8px;
+}
+
+.day-filter-button {
+    width: 54px;
+    height: 44px;
+}
+
+.day-filter-button strong {
+    font-size: 15px;
+}
+
+.detail-toggle {
+    height: 44px;
+    padding: 0 18px;
+    font-size: 15px;
+}
+
+.detail-filter-panel.detail-filter-layout {
+    gap: 30px;
+}
+
+.detail-left-groups {
+    gap: 18px;
+}
+
+.detail-filter-layout .detail-chip-group {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 14px;
+}
+
+.detail-filter-layout .detail-chip-group > strong {
+    font-size: 15px;
+    padding-top: 9px;
+}
+
+.detail-filter-layout .detail-chip-row {
+    gap: 10px 12px;
+}
+
+.detail-option-chip {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+.detail-right-time {
+    padding: 16px;
+}
+
+.mini-time-panel-title {
+    font-size: 15px;
+}
+
+.mini-time-filter-help,
+.mini-time-legend {
+    font-size: 13px;
+}
+
+.active-filter-chip {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.empty-filter-hint {
+    font-size: 14px;
+}
+
+.view-controls {
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.control-label,
+.view-controls > span {
+    font-size: 15px;
+}
+
+.sort-chip-group {
+    margin-right: 6px;
+}
+
+.view-controls .availability-toggle {
+    height: 40px;
+    margin: 0 8px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+.view-mode-group {
+    margin-left: 6px;
+}
+
+@media (max-width: 900px) {
+    .filter-panel .search-filter-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .main-search-button {
+        width: 100%;
+    }
+
+    .view-controls {
+        justify-content: flex-start;
+    }
 }
 
 /* 결과 영역은 넓게 사용 */
@@ -3335,23 +3414,13 @@ body.timetable-wide .timetable-summary {
     flex: 0 0 auto !important;
 }
 
-/* 시간표 grid가 남은 높이를 크게 차지 */
-body.timetable-wide .timetable-grid-scroll {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-
-    overflow: visible !important;
-    border: 1px solid #ddd;
-}
-
 /* 1~9교시가 한 화면에 보이도록 행 높이를 유연하게 */
 body.timetable-wide .timetable-grid {
-    height: 100% !important;
     min-height: 540px !important;
 
     display: grid !important;
     grid-template-columns: 56px repeat(6, minmax(100px, 1fr)) !important;
-    grid-template-rows: 38px repeat(9, minmax(44px, 1fr)) !important;
+    grid-template-rows: var(--tt-grid-template-rows, 38px repeat(9, minmax(44px, 1fr))) !important;
 
     overflow: visible !important;
 }
@@ -3410,7 +3479,7 @@ body.timetable-wide .timetable-view-shell {
 
 body.timetable-wide .timetable-grid {
     min-height: 420px !important;
-    grid-template-rows: 32px repeat(9, minmax(34px, 1fr)) !important;
+    grid-template-rows: var(--tt-grid-template-rows, 32px repeat(9, minmax(34px, 1fr))) !important;
 }
 
 /* =========================================================
@@ -3526,11 +3595,6 @@ body.timetable-wide .timetable-summary {
     grid-row: 1;
 }
 
-body.timetable-wide .timetable-grid-scroll {
-    grid-row: 2;
-    min-height: 0 !important;
-}
-
 body.timetable-wide .untimed-course-box {
     grid-row: 3;
 }
@@ -3599,10 +3663,10 @@ body.timetable-wide .untimed-course-box {
 ========================================================= */
 
 .timetable-summary {
-    display: grid !important;
-    grid-template-columns: auto minmax(220px, 320px) 1fr;
+    display: flex !important;
     align-items: center;
-    gap: 18px;
+    flex-wrap: wrap;
+    gap: 14px;
 
     background: white;
     border: 1px solid #ddd;
@@ -3633,7 +3697,10 @@ body.timetable-wide .untimed-course-box {
     grid-template-columns: auto 1fr;
     align-items: center;
     gap: 10px;
-    min-width: 0;
+    width: clamp(220px, 24vw, 300px);
+    flex: 1 1 220px;
+    min-width: 200px;
+    max-width: 300px;
 }
 
 .credit-progress-text {
@@ -3673,26 +3740,51 @@ body.timetable-wide .untimed-course-box {
 }
 
 .timetable-hint {
-    justify-self: end;
-    color: #999;
+    flex: 1 1 100%;
+    margin-left: 0;
+    max-width: none;
+    color: #6b7280;
     font-size: 12px;
     font-weight: 800;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+    word-break: keep-all;
+}
+
+.timetable-summary-tabs {
+    display: inline-flex !important;
+    flex: 0 0 auto;
+    padding: 0;
+    align-items: center;
     white-space: nowrap;
+}
+
+.timetable-summary-tabs .timetable-tab-btn {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 800;
 }
 
 /* 좁은 화면에서는 줄바꿈 */
 @media (max-width: 900px) {
     .timetable-summary {
-        grid-template-columns: 1fr;
         gap: 8px;
+        flex-wrap: wrap;
     }
 
     .credit-progress-box {
-        grid-template-columns: auto 1fr;
+        flex: 1 1 100%;
+        width: auto;
     }
 
     .timetable-hint {
-        justify-self: start;
+        margin-left: 0;
+    }
+
+    .timetable-summary-tabs {
+        flex-wrap: wrap;
     }
 }
 
@@ -3844,13 +3936,249 @@ body.timetable-wide .untimed-course-box {
     border-left-color: #4d92cc !important;
 }
 
+.tt-course-block.enrollment-blocked {
+    background: #eeeeee !important;
+    border-left-color: #bdbdbd !important;
+    color: #777;
+    cursor: not-allowed !important;
+    filter: grayscale(0.35);
+}
+
+.tt-course-block.enrollment-blocked .tt-course-title {
+    color: #777;
+}
+
+.tt-course-block.enrollment-blocked .tt-course-pin {
+    opacity: 0.45;
+}
+
 .tt-bg-cell.card-hovered {
-    background: #d1fae5;
+    background: #fef9c3;
 }
 
 body.dark .tt-bg-cell.card-hovered {
-    background: #14532d;
+    background: #713f12;
 }
+
+.course-card.card-highlighted {
+    background: #fef9c3;
+}
+
+body.dark .course-card.card-highlighted {
+    background: #422006;
+}
+
+.course-card.enrollment-blocked,
+.timetable-candidate-list .course-card.compact.registration-mode.enrollment-blocked {
+    background: #f2f2f2 !important;
+    color: #777;
+}
+
+.course-card.enrollment-blocked .course-card-main {
+    background: #f2f2f2 !important;
+    opacity: 0.72;
+}
+
+.course-card.enrollment-blocked .course-color-dot {
+    opacity: 0.45;
+}
+
+.untimed-item.enrollment-blocked {
+    background: #eeeeee !important;
+    border-color: #cfcfcf !important;
+    color: #777;
+    cursor: not-allowed;
+    filter: grayscale(0.35);
+}
+
+.untimed-item.enrollment-blocked .course-color-dot {
+    opacity: 0.45;
+}
+
+body.dark .tt-course-block.enrollment-blocked,
+body.dark .course-card.enrollment-blocked,
+body.dark .untimed-item.enrollment-blocked {
+    background: #3a3a3a !important;
+    color: #aaa;
+}
+
+.recommendation-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 10px;
+
+    padding: 10px 12px;
+    border-bottom: 1px solid #ddd;
+    background: #fff9e8;
+    color: #5f4511;
+}
+
+.recommendation-banner strong {
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.recommendation-banner span {
+    grid-column: 1;
+    color: #8a6a22;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.recommendation-banner button {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    border: 1px solid #d7bd74;
+    background: white;
+    color: #6b4d0e;
+    padding: 6px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.recommendation-banner button:hover {
+    background: #fff3c4;
+}
+
+/* =========================================================
+   Timetable Tab Switcher
+========================================================= */
+
+.timetable-tab-bar {
+    display: flex;
+    gap: 6px;
+    padding: 8px 0 6px 0;
+}
+
+.timetable-tab-btn {
+    padding: 5px 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #444;
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+
+.timetable-tab-btn:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.timetable-tab-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+body.dark .timetable-tab-btn {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #ccc;
+}
+
+body.dark .timetable-tab-btn:hover {
+    border-color: #78aee8;
+    color: #78aee8;
+}
+
+body.dark .timetable-tab-btn.active {
+    background: #2e4a68;
+    border-color: #78aee8;
+    color: #eef5ff;
+}
+
+/* =========================================================
+   Timetable Course Group (overlapping courses)
+========================================================= */
+
+.tt-course-group {
+    margin: 3px;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* =========================================================
+   Course Color Dot (pin)
+========================================================= */
+
+.course-color-dot {
+    display: block;
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.85),
+        0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+/* In timetable course blocks */
+.tt-course-block .tt-course-pin {
+    position: static;
+    justify-self: center;
+    width: 9px;
+    height: 9px;
+    z-index: 4;
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.9),
+        0 1px 3px rgba(0, 0, 0, 0.24);
+    pointer-events: none;
+}
+
+body.dark .tt-course-block .tt-course-pin {
+    box-shadow:
+        0 0 0 1px rgba(42, 42, 42, 0.9),
+        0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.compact-badge {
+    border: 0;
+    appearance: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.course-title-line h3 .course-title-link {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tt-course-title-link {
+    display: block;
+    min-width: 0;
+}
+
+/* In course cards */
+.course-card {
+    position: relative;
+}
+
+.course-card .card-pin {
+    top: 9px;
+    left: 9px;
+    z-index: 1;
+}
+
+/* In untimed course items */
+.untimed-item {
+    position: relative;
+}
+
+.untimed-dot {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
 /* =========================================================
    CourseCard enrollment/cancel state
 ========================================================= */

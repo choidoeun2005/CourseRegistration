@@ -92,45 +92,36 @@ function getCourseSessions(course) {
     return [];
 }
 
-function sessionsConflict(sessionA, sessionB) {
-    if (!sessionA || !sessionB) return false;
-    if (sessionA.day !== sessionB.day) return false;
-
-    return sessionA.periods.some((period) =>
-        sessionB.periods.includes(period)
-    );
-}
-
-function hasTimeConflict(targetCourse, selectedCourses) {
-    const targetSessions = getCourseSessions(targetCourse);
-
-    return selectedCourses.some((selectedCourse) => {
-        if (!selectedCourse) return false;
-        if (targetCourse.id === selectedCourse.id) return false;
-
-        const selectedSessions = getCourseSessions(selectedCourse);
-
-        return targetSessions.some((targetSession) =>
-            selectedSessions.some((selectedSession) =>
-                sessionsConflict(targetSession, selectedSession)
-            )
-        );
-    });
-}
-
-function getTimeConflictCourse(targetCourse, selectedCourses) {
+function getTimeConflictCourse(targetCourse, selectedCourses, maxAllowed = 3) {
     const targetSessions = getCourseSessions(targetCourse);
 
     return selectedCourses.find((selectedCourse) => {
         if (!selectedCourse) return false;
         if (targetCourse.id === selectedCourse.id) return false;
 
-        const selectedSessions = getCourseSessions(selectedCourse);
-
         return targetSessions.some((targetSession) =>
-            selectedSessions.some((selectedSession) =>
-                sessionsConflict(targetSession, selectedSession)
-            )
+            targetSession.periods.some((period) => {
+                const selectedHasSameCell = getCourseSessions(selectedCourse).some(
+                    (selectedSession) =>
+                        selectedSession.day === targetSession.day &&
+                        selectedSession.periods.includes(period)
+                );
+
+                if (!selectedHasSameCell) return false;
+
+                const overlapCount = selectedCourses.filter((course) => {
+                    if (!course) return false;
+                    if (targetCourse.id === course.id) return false;
+
+                    return getCourseSessions(course).some(
+                        (session) =>
+                            session.day === targetSession.day &&
+                            session.periods.includes(period)
+                    );
+                }).length;
+
+                return overlapCount >= maxAllowed;
+            })
         );
     });
 }
@@ -225,7 +216,7 @@ export function addCourseToTimetable(courseId) {
         };
     }
 
-    const conflictCourse = getTimeConflictCourse(course, selectedCourses);
+    const conflictCourse = getTimeConflictCourse(course, selectedCourses, 3);
 
     if (conflictCourse) {
         return {
@@ -332,7 +323,7 @@ export function enrollCourse(courseId) {
         };
     }
 
-    const conflictCourse = getTimeConflictCourse(course, enrolledCourses);
+    const conflictCourse = getTimeConflictCourse(course, enrolledCourses, 1);
 
     if (conflictCourse) {
         return {

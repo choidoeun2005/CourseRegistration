@@ -4,6 +4,7 @@ import {
     getCollegeOptions,
     getCourseTypeOptions,
     getCreditOptions,
+    getGeneralEducationAreaOptions,
     getDepartmentOptions
 } from "../utils/courseFilterUtils";
 
@@ -195,10 +196,24 @@ function FilterPanel({ courses, filters, onChange }) {
     );
     const creditOptions = getCreditOptions(courses);
     const courseTypeOptions = getCourseTypeOptions(courses);
+    const generalAreaOptions = getGeneralEducationAreaOptions(courses);
 
-    const searchTarget = filters.searchTarget || "all";
+    const searchTarget = SEARCH_TARGETS.some(
+        (target) => target.value === filters.searchTarget
+    )
+        ? filters.searchTarget
+        : "all";
     const englishMode = filters.englishMode || "all";
     const timeSlots = filters.timeSlots || {};
+    const selectedCourseTypes = Array.isArray(filters.courseTypes)
+        ? filters.courseTypes.filter(Boolean)
+        : filters.courseType
+            ? [filters.courseType]
+            : [];
+    const isGeneralSelected = selectedCourseTypes.includes("교양");
+    const departmentSelectValue = isGeneralSelected
+        ? filters.generalArea || ""
+        : filters.department.value;
 
     const updateFilters = (updater) => {
         onChange((prev) => {
@@ -230,7 +245,8 @@ function FilterPanel({ courses, filters, onChange }) {
             department: {
                 value: "",
                 enabled: false
-            }
+            },
+            generalArea: ""
         }));
     };
 
@@ -238,13 +254,80 @@ function FilterPanel({ courses, filters, onChange }) {
         updateFilters((prev) => ({
             ...prev,
             department: {
-                value,
+                value: isGeneralSelected ? "" : value,
                 enabled: Boolean(value)
-            }
+            },
+            generalArea: isGeneralSelected ? value : ""
         }));
     };
 
+    const toggleCourseType = (type) => {
+        updateFilters((prev) => {
+            const nextCourseTypes = (() => {
+                const current = Array.isArray(prev.courseTypes)
+                    ? prev.courseTypes.filter(Boolean)
+                    : prev.courseType
+                        ? [prev.courseType]
+                        : [];
+                const next = current.includes(type)
+                    ? current.filter((item) => item !== type)
+                    : [...current, type];
+
+                return next;
+            })();
+            const willUseGeneralArea = nextCourseTypes.includes("교양");
+            const isTogglingGeneral = type === "교양";
+
+            return {
+                ...prev,
+                courseType: "",
+                courseTypes: nextCourseTypes,
+                college:
+                    isTogglingGeneral && willUseGeneralArea
+                    ? {
+                        value: "",
+                        enabled: false
+                    }
+                    : prev.college,
+                department: isTogglingGeneral
+                    ? {
+                        value: "",
+                        enabled: false
+                    }
+                    : prev.department,
+                generalArea: isTogglingGeneral ? "" : prev.generalArea
+            };
+        });
+    };
+
+    const removeCourseType = (type) => {
+        updateFilters((prev) => {
+            const current = Array.isArray(prev.courseTypes)
+                ? prev.courseTypes.filter(Boolean)
+                : prev.courseType
+                    ? [prev.courseType]
+                    : [];
+            const next = current.filter((item) => item !== type);
+
+            return {
+                ...prev,
+                courseType: "",
+                courseTypes: next,
+                generalArea: type === "교양" ? "" : prev.generalArea,
+                department:
+                    type === "교양"
+                        ? {
+                            value: "",
+                            enabled: false
+                        }
+                        : prev.department
+            };
+        });
+    };
+
     const toggleCollegeEnabled = () => {
+        if (isGeneralSelected) return;
+
         updateFilters((prev) => ({
             ...prev,
             college: {
@@ -385,7 +468,7 @@ function FilterPanel({ courses, filters, onChange }) {
         );
     }
 
-    if (filters.department.enabled && filters.department.value) {
+    if (!isGeneralSelected && filters.department.enabled && filters.department.value) {
         activeChips.push(
             <FilterChip
                 key="department"
@@ -400,6 +483,26 @@ function FilterPanel({ courses, filters, onChange }) {
                 }
             >
                 학과: {filters.department.value}
+            </FilterChip>
+        );
+    }
+
+    if (isGeneralSelected && filters.department.enabled && filters.generalArea) {
+        activeChips.push(
+            <FilterChip
+                key="generalArea"
+                onRemove={() =>
+                    updateFilters((prev) => ({
+                        ...prev,
+                        generalArea: "",
+                        department: {
+                            ...prev.department,
+                            enabled: false
+                        }
+                    }))
+                }
+            >
+                영역: {filters.generalArea}
             </FilterChip>
         );
     }
@@ -461,13 +564,15 @@ function FilterPanel({ courses, filters, onChange }) {
         );
     }
 
-    if (filters.courseType) {
+    courseTypeOptions
+        .filter((type) => selectedCourseTypes.includes(type))
+        .forEach((type) => {
         activeChips.push(
-            <FilterChip key="courseType" onRemove={() => setValue("courseType", "")}>
-                {filters.courseType}
+            <FilterChip key={`courseType-${type}`} onRemove={() => removeCourseType(type)}>
+                {type}
             </FilterChip>
         );
-    }
+    });
 
     if (filters.onlyAvailable) {
         activeChips.push(
@@ -548,7 +653,20 @@ function FilterPanel({ courses, filters, onChange }) {
                     value={filters.keyword}
                     placeholder="검색어를 입력하세요"
                     onChange={(event) => setValue("keyword", event.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                            setValue("keyword", filters.keyword.trim());
+                        }
+                    }}
                 />
+
+                <button
+                    type="button"
+                    className="main-search-button"
+                    onClick={() => setValue("keyword", filters.keyword.trim())}
+                >
+                    검색
+                </button>
 
                 <div className="search-target-chips">
                     {SEARCH_TARGETS.map((target) => (
@@ -566,7 +684,7 @@ function FilterPanel({ courses, filters, onChange }) {
             <div className="filter-main-row">
                 <label
                     className={`filter-field ${
-                        filters.college.enabled ? "" : "filter-muted"
+                        filters.college.enabled && !isGeneralSelected ? "" : "filter-muted"
                     }`}
                 >
                     <span>대학</span>
@@ -574,6 +692,7 @@ function FilterPanel({ courses, filters, onChange }) {
                     <select
                         value={filters.college.value}
                         onChange={(event) => setCollege(event.target.value)}
+                        disabled={isGeneralSelected}
                     >
                         <option value="">전체 대학</option>
 
@@ -585,8 +704,8 @@ function FilterPanel({ courses, filters, onChange }) {
                     </select>
 
                     <FilterApplyToggle
-                        enabled={filters.college.enabled}
-                        disabled={!filters.college.value}
+                        enabled={filters.college.enabled && !isGeneralSelected}
+                        disabled={isGeneralSelected || !filters.college.value}
                         onClick={toggleCollegeEnabled}
                     />
                 </label>
@@ -596,54 +715,55 @@ function FilterPanel({ courses, filters, onChange }) {
                         filters.department.enabled ? "" : "filter-muted"
                     }`}
                 >
-                    <span>학과</span>
+                    <span>{isGeneralSelected ? "영역" : "학과"}</span>
 
                     <select
-                        value={filters.department.value}
+                        value={departmentSelectValue}
                         onChange={(event) => setDepartment(event.target.value)}
                     >
-                        <option value="">전체 학과</option>
+                        <option value="">
+                            {isGeneralSelected ? "전체 영역" : "전체 학과"}
+                        </option>
 
-                        {departmentOptions.map((item) => (
-                            <option
-                                key={`${item.college}-${item.department}`}
-                                value={item.department}
-                            >
-                                {item.department}
-                                {!filters.college.value && item.college
-                                    ? ` (${item.college})`
-                                    : ""}
-                            </option>
-                        ))}
+                        {isGeneralSelected
+                            ? generalAreaOptions.map((area) => (
+                                <option key={area} value={area}>
+                                    {area}
+                                </option>
+                            ))
+                            : departmentOptions.map((item) => (
+                                <option
+                                    key={`${item.college}-${item.department}`}
+                                    value={item.department}
+                                >
+                                    {item.department}
+                                    {!filters.college.value && item.college
+                                        ? ` (${item.college})`
+                                        : ""}
+                                </option>
+                            ))}
                     </select>
 
                     <FilterApplyToggle
                         enabled={filters.department.enabled}
-                        disabled={!filters.department.value}
+                        disabled={!departmentSelectValue}
                         onClick={toggleDepartmentEnabled}
                     />
                 </label>
 
-                <div className="day-filter-group">
-                    <span>요일</span>
+                <div className="filter-inline-chip-group">
+                    <span>이수구분</span>
 
-                    <div className="day-buttons">
-                        {DAYS.map((day) => {
-                            const state = filters.dayStates[day];
-
-                            return (
-                                <button
-                                    type="button"
-                                    key={day}
-                                    className={`day-filter-button ${state}`}
-                                    onClick={() => toggleDay(day)}
-                                    title="1번 클릭: 포함, 2번 클릭: 제외, 3번 클릭: 해제"
-                                >
-                                    <strong>{day}</strong>
-                                    {state !== "any" && <small>{getDayLabel(state)}</small>}
-                                </button>
-                            );
-                        })}
+                    <div className="detail-chip-row">
+                        {courseTypeOptions.map((type) => (
+                            <OptionChip
+                                key={type}
+                                active={selectedCourseTypes.includes(type)}
+                                onClick={() => toggleCourseType(type)}
+                            >
+                                {type}
+                            </OptionChip>
+                        ))}
                     </div>
                 </div>
 
@@ -675,36 +795,6 @@ function FilterPanel({ courses, filters, onChange }) {
                             ) : (
                                 <span className="detail-empty-text">학점 정보 없음</span>
                             )}
-                        </DetailGroup>
-
-                        <DetailGroup title="이수구분">
-                            {courseTypeOptions.length > 0 ? (
-                                courseTypeOptions.map((type) => (
-                                    <OptionChip
-                                        key={type}
-                                        active={filters.courseType === type}
-                                        onClick={() =>
-                                            setValue(
-                                                "courseType",
-                                                filters.courseType === type ? "" : type
-                                            )
-                                        }
-                                    >
-                                        {type}
-                                    </OptionChip>
-                                ))
-                            ) : (
-                                <span className="detail-empty-text">이수구분 정보 없음</span>
-                            )}
-                        </DetailGroup>
-
-                        <DetailGroup title="시간표 기준">
-                            <OptionChip
-                                active={filters.onlyAvailable}
-                                onClick={() => toggleBoolean("onlyAvailable")}
-                            >
-                                담을 수 있는 과목만
-                            </OptionChip>
                         </DetailGroup>
 
                         <DetailGroup title="수업 특성">

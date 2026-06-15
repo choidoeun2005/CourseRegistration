@@ -11,9 +11,11 @@ import CourseCard from "../components/CourseCard.jsx";
 import Timetable from "../components/Timetable.jsx";
 import EnrollmentQueueOverlay from "../components/EnrollmentQueueOverlay.jsx";
 
-import { getCourseSessions } from "../utils/timeUtils";
-
-import { getBlockReason } from "../utils/timeUtils";
+import {
+    courseIncludesCell,
+    getBlockReason,
+    getCourseSessions
+} from "../utils/timeUtils";
 
 import {
     applyCourseFilters,
@@ -38,6 +40,12 @@ const DAY_ORDER = {
 
 function includesCourseId(ids = [], courseId) {
     return ids.map(Number).includes(Number(courseId));
+}
+
+function getCourseBlockReason(course, selectedCourses, registrationOpen) {
+    return getBlockReason(course, selectedCourses, {
+        maxTimeOverlap: registrationOpen ? 1 : 3
+    });
 }
 
 function getFirstSessionSortValue(course) {
@@ -124,11 +132,19 @@ function sortCourses(courses, sortType) {
     });
 }
 
+const COURSE_COLORS = [
+    "#2563eb", "#d946ef", "#16a34a", "#f59e0b",
+    "#7c3aed", "#0891b2", "#e11d48", "#84cc16",
+    "#4f46e5", "#0f766e", "#b45309", "#be185d"
+];
+
 function CourseListPage({
                             likedCourseIds,
                             timetableCourseIds,
                             enrolledCourseIds,
                             registrationOpen,
+                            activeTimetableTab = 1,
+                            onSwitchTimetableTab,
                             onToggleLike,
                             onToggleTimetable,
                             onEnrollCourse,
@@ -140,6 +156,7 @@ function CourseListPage({
     const [viewType, setViewType] = useState("list");
     const [sortType, setSortType] = useState("time");
     const [hoveredCourseId, setHoveredCourseId] = useState(null);
+    const [recommendationCell, setRecommendationCell] = useState(null);
 
     const hoveredCells = useMemo(() => {
         if (hoveredCourseId === null) return new Set();
@@ -165,6 +182,14 @@ function CourseListPage({
         [timetableCourseIds]
     );
 
+    const courseColorMap = useMemo(() => {
+        const map = {};
+        normalizedTimetableCourseIds.forEach((id, index) => {
+            map[id] = COURSE_COLORS[index % COURSE_COLORS.length];
+        });
+        return map;
+    }, [normalizedTimetableCourseIds]);
+
     const normalizedEnrolledCourseIds = useMemo(
         () => enrolledCourseIds.map(Number),
         [enrolledCourseIds]
@@ -185,6 +210,12 @@ function CourseListPage({
     const baseCourses = useMemo(() => {
         return registrationOpen ? enrolledCourses : timetableCourses;
     }, [registrationOpen, enrolledCourses, timetableCourses]);
+
+    const getCurrentBlockReason = useCallback(
+        (course, selectedCourses = baseCourses) =>
+            getCourseBlockReason(course, selectedCourses, registrationOpen),
+        [baseCourses, registrationOpen]
+    );
 
     const {
         queueState,
@@ -215,7 +246,7 @@ function CourseListPage({
 
             const blockReason = alreadyEnrolled
                 ? "이미 신청한 과목입니다."
-                : getBlockReason(targetCourse, baseCourses);
+                : getCurrentBlockReason(targetCourse);
 
             if (blockReason) {
                 alert(blockReason);
@@ -231,7 +262,7 @@ function CourseListPage({
         [
             getCourseByIdFromList,
             normalizedEnrolledCourseIds,
-            baseCourses,
+            getCurrentBlockReason,
             startEnrollment
         ]
     );
@@ -259,11 +290,38 @@ function CourseListPage({
     const filteredCourses = useMemo(() => {
         const result = applyCourseFilters(courses, filters, {
             baseCourses,
-            getBlockReason
+            getBlockReason: (course, selectedCourses) =>
+                getCurrentBlockReason(course, selectedCourses)
         });
 
         return sortCourses(result, sortType);
-    }, [courses, filters, baseCourses, sortType]);
+    }, [courses, filters, baseCourses, getCurrentBlockReason, sortType]);
+
+    const recommendedCourses = useMemo(() => {
+        if (!recommendationCell) return filteredCourses;
+
+        return filteredCourses.filter((course) => {
+            if (!courseIncludesCell(course, recommendationCell.day, recommendationCell.period)) {
+                return false;
+            }
+
+            if (includesCourseId(normalizedTimetableCourseIds, course.id)) {
+                return false;
+            }
+
+            return !getBlockReason(course, timetableCourses, { maxTimeOverlap: 1 });
+        });
+    }, [
+        filteredCourses,
+        normalizedTimetableCourseIds,
+        recommendationCell,
+        timetableCourses
+    ]);
+
+    const displayedCourses =
+        viewType === "timetable" && recommendationCell
+            ? recommendedCourses
+            : filteredCourses;
 
     useEffect(() => {
         if (!registrationOpen) return;
@@ -295,7 +353,7 @@ function CourseListPage({
             if (!digitMatch) return;
 
             const number = Number(digitMatch[1]);
-            const targetCourse = filteredCourses[number - 1];
+            const targetCourse = displayedCourses[number - 1];
 
             if (!targetCourse) return;
 
@@ -306,7 +364,7 @@ function CourseListPage({
 
             const blockReason = alreadyEnrolled
                 ? ""
-                : getBlockReason(targetCourse, baseCourses);
+                : getCurrentBlockReason(targetCourse);
 
             if (alreadyEnrolled || blockReason) return;
 
@@ -324,9 +382,9 @@ function CourseListPage({
     }, [
         registrationOpen,
         isQueueRunning,
-        filteredCourses,
+        displayedCourses,
         normalizedEnrolledCourseIds,
-        baseCourses,
+        getCurrentBlockReason,
         handleQueuedEnroll
     ]);
 
@@ -352,7 +410,11 @@ function CourseListPage({
 
             <section className="result-section">
                 <div className="result-header">
-                    <strong>검색 결과 {filteredCourses.length}개</strong>
+                    <strong>
+                        {recommendationCell && viewType === "timetable"
+                            ? `${recommendationCell.day} ${recommendationCell.period}교시 추천 ${displayedCourses.length}개`
+                            : `검색 결과 ${filteredCourses.length}개`}
+                    </strong>
 
                     <div className="view-controls">
                         <span className="control-label">정렬</span>
@@ -371,6 +433,21 @@ function CourseListPage({
                                 </button>
                             ))}
                         </div>
+
+                        <button
+                            type="button"
+                            className={`availability-toggle ${
+                                filters.onlyAvailable ? "active" : ""
+                            }`}
+                            onClick={() =>
+                                setFilters((prev) => ({
+                                    ...prev,
+                                    onlyAvailable: !prev.onlyAvailable
+                                }))
+                            }
+                        >
+                            담을 수 있는 과목만
+                        </button>
 
                         <span className="control-label">보기</span>
 
@@ -394,61 +471,87 @@ function CourseListPage({
                     </div>
                 </div>
 
-                {viewType === "timetable" && (
-                    <div className="timetable-view-shell">
-                        <div className="timetable-fixed-panel">
-                            <Timetable
-                                courses={timetableCourses}
-                                maxCredits={REGISTRATION_CONFIG.maxCredits}
-                                registrationOpen={registrationOpen}
-                                enrolledCourseIds={normalizedEnrolledCourseIds}
-                                hoveredCells={hoveredCells}
-                                onEnrollCourse={handleQueuedEnroll}
-                                onCancelEnrollCourse={handleQueuedCancelEnroll}
-                                onRemoveCourse={onToggleTimetable}
-                            />
+	                {viewType === "timetable" && (
+	                    <>
+	                        <div className="timetable-view-shell">
+	                            <div className="timetable-fixed-panel">
+	                                <Timetable
+	                                    courses={timetableCourses}
+                                    maxCredits={REGISTRATION_CONFIG.maxCredits}
+                                    registrationOpen={registrationOpen}
+                                    enrolledCourseIds={normalizedEnrolledCourseIds}
+                                    hoveredCells={hoveredCells}
+                                    courseColorMap={courseColorMap}
+                                    getBlockReason={(course) => getCurrentBlockReason(course)}
+                                    activeTimetableTab={activeTimetableTab}
+                                    onSwitchTimetableTab={onSwitchTimetableTab}
+                                    onCellClick={(day, period) =>
+                                        setRecommendationCell({ day, period })
+                                    }
+                                    onEnrollCourse={handleQueuedEnroll}
+                                    onCancelEnrollCourse={handleQueuedCancelEnroll}
+                                    onRemoveCourse={onToggleTimetable}
+                                />
+                            </div>
+
+                            <div className="course-list narrow timetable-candidate-list">
+                                {recommendationCell && (
+                                    <div className="recommendation-banner">
+                                        <strong>
+                                            {recommendationCell.day} {recommendationCell.period}교시 후보
+                                        </strong>
+                                        <span>현재 시간표와 겹치지 않는 과목만 표시 중</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setRecommendationCell(null)}
+                                        >
+                                            전체 보기
+                                        </button>
+                                    </div>
+                                )}
+
+                                {displayedCourses.map((course, index) => {
+                                    const alreadySelected = registrationOpen
+                                        ? includesCourseId(normalizedEnrolledCourseIds, course.id)
+                                        : includesCourseId(normalizedTimetableCourseIds, course.id);
+
+                                    const blockReason = alreadySelected
+                                        ? ""
+                                        : getCurrentBlockReason(course);
+
+                                    return (
+                                        <CourseCard
+                                            key={course.id}
+                                            course={course}
+                                            liked={includesCourseId(normalizedLikedCourseIds, course.id)}
+                                            inTimetable={includesCourseId(
+                                                normalizedTimetableCourseIds,
+                                                course.id
+                                            )}
+                                            enrolled={includesCourseId(
+                                                normalizedEnrolledCourseIds,
+                                                course.id
+                                            )}
+                                            blockReason={blockReason}
+                                            compact={true}
+                                            registrationOpen={registrationOpen}
+                                            quickIndex={
+                                                registrationOpen && index < 9 ? index + 1 : undefined
+                                            }
+                                            colorDot={courseColorMap[Number(course.id)] ?? null}
+                                            onToggleLike={onToggleLike}
+                                            onToggleTimetable={onToggleTimetable}
+                                            onEnrollCourse={handleQueuedEnroll}
+                                            onCancelEnrollCourse={handleQueuedCancelEnroll}
+                                            isHovered={hoveredCourseId === course.id}
+                                            onMouseEnter={() => setHoveredCourseId(course.id)}
+                                            onMouseLeave={() => setHoveredCourseId(null)}
+                                        />
+                                    );
+                                })}
+                            </div>
                         </div>
-
-                        <div className="course-list narrow timetable-candidate-list">
-                            {filteredCourses.map((course, index) => {
-                                const alreadySelected = registrationOpen
-                                    ? includesCourseId(normalizedEnrolledCourseIds, course.id)
-                                    : includesCourseId(normalizedTimetableCourseIds, course.id);
-
-                                const blockReason = alreadySelected
-                                    ? ""
-                                    : getBlockReason(course, baseCourses);
-
-                                return (
-                                    <CourseCard
-                                        key={course.id}
-                                        course={course}
-                                        liked={includesCourseId(normalizedLikedCourseIds, course.id)}
-                                        inTimetable={includesCourseId(
-                                            normalizedTimetableCourseIds,
-                                            course.id
-                                        )}
-                                        enrolled={includesCourseId(
-                                            normalizedEnrolledCourseIds,
-                                            course.id
-                                        )}
-                                        blockReason={blockReason}
-                                        compact={true}
-                                        registrationOpen={registrationOpen}
-                                        quickIndex={
-                                            registrationOpen && index < 9 ? index + 1 : undefined
-                                        }
-                                        onToggleLike={onToggleLike}
-                                        onToggleTimetable={onToggleTimetable}
-                                        onEnrollCourse={handleQueuedEnroll}
-                                        onCancelEnrollCourse={handleQueuedCancelEnroll}
-                                        onMouseEnter={() => setHoveredCourseId(course.id)}
-                                        onMouseLeave={() => setHoveredCourseId(null)}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </div>
+                    </>
                 )}
 
                 {viewType === "list" && (
@@ -460,7 +563,7 @@ function CourseListPage({
 
                             const blockReason = alreadySelected
                                 ? ""
-                                : getBlockReason(course, baseCourses);
+                                : getCurrentBlockReason(course);
 
                             return (
                                 <CourseCard
@@ -480,6 +583,7 @@ function CourseListPage({
                                     quickIndex={
                                         registrationOpen && index < 9 ? index + 1 : undefined
                                     }
+                                    colorDot={courseColorMap[Number(course.id)] ?? null}
                                     onToggleLike={onToggleLike}
                                     onToggleTimetable={onToggleTimetable}
                                     onEnrollCourse={handleQueuedEnroll}
